@@ -1,0 +1,88 @@
+
+up to date, audited 457 packages in 2s
+
+148 packages are looking for funding
+  run `npm fund` for details
+
+5 vulnerabilities (4 moderate, 1 high)
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+
+> christmas-parade-judging@1.0.0 build
+> next build
+
+  Γû▓ Next.js 14.2.33
+  - Environments: .env.local
+
+   Creating an optimized production build ...
+(node:23044) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ Γ£ô Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/21) ...
+   Generating static pages (5/21) 
+   Generating static pages (10/21) 
+   Generating static pages (15/21) 
+ Γ£ô Generating static pages (21/21)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+Γöî Γùï /                                    2.54 kB         105 kB
+Γö£ Γùï /_not-found                          142 B          87.5 kB
+Γö£ Γùï /admin                               3.76 kB         116 kB
+Γö£ Γùï /admin/events                        8 kB            120 kB
+Γö£ Γùï /admin/results                       8.87 kB         174 kB
+Γö£ ╞Æ /api/admin/events                    0 B                0 B
+Γö£ ╞Æ /api/admin/events/categories         0 B                0 B
+Γö£ ╞Æ /api/admin/events/judges             0 B                0 B
+Γö£ ╞Æ /api/admin/judges                    0 B                0 B
+Γö£ ╞Æ /api/admin/judges/unlock             0 B                0 B
+Γö£ ╞Æ /api/admin/scores                    0 B                0 B
+Γö£ ╞Æ /api/admin/winners                   0 B                0 B
+Γö£ ╞Æ /api/coordinator/approve             0 B                0 B
+Γö£ ╞Æ /api/coordinator/floats              0 B                0 B
+Γö£ ╞Æ /api/coordinator/participants        0 B                0 B
+Γö£ ╞Æ /api/coordinator/qr-tokens           0 B                0 B
+Γö£ ╞Æ /api/coordinator/settings            0 B                0 B
+Γö£ ╞Æ /api/coordinator/upload              0 B                0 B
+Γö£ ╞Æ /api/entries                         0 B                0 B
+Γö£ ╞Æ /api/events                          0 B                0 B
+Γö£ ╞Æ /api/floats                          0 B                0 B
+Γö£ ╞Æ /api/judge/submit                    0 B                0 B
+Γö£ ╞Æ /api/judges                          0 B                0 B
+Γö£ ╞Æ /api/scores                          0 B                0 B
+Γö£ Γùï /coordinator                         548 B          87.9 kB
+Γö£ Γùï /coordinator/approve                 2.51 kB         166 kB
+Γö£ Γùï /coordinator/positions               3.94 kB         176 kB
+Γö£ Γùï /coordinator/qr                      9.94 kB         113 kB
+Γö£ Γùï /coordinator/upload                  116 kB          223 kB
+Γö£ ╞Æ /float/[id]                          11.6 kB         124 kB
+Γö£ ╞Æ /floats                              4.62 kB         170 kB
+Γö£ Γùï /icon.svg                            0 B                0 B
+Γö£ ╞Æ /judge                               3.68 kB        97.8 kB
+Γö£ Γùï /judge/login                         3.6 kB          107 kB
+Γö£ ╞Æ /judge/quick/[token]                 142 B          87.5 kB
+Γö£ ╞Æ /review                              3.08 kB         115 kB
+Γö£ Γùï /signup                              5.61 kB         109 kB
+Γö£ Γùï /signup/select-event                 3.85 kB         107 kB
+Γö£ Γùï /sitemap.xml                         0 B                0 B
+Γöö ╞Æ /submit                              2.39 kB         105 kB
++ First Load JS shared by all            87.3 kB
+  Γö£ chunks/117-51c9e1a719a173a4.js       31.7 kB
+  Γö£ chunks/fd9d1056-d84b7e3c88a6adcc.js  53.6 kB
+  Γöö other shared chunks (total)          1.95 kB
+
+
+╞Æ Middleware                             26.5 kB
+
+Γùï  (Static)   prerendered as static content
+╞Æ  (Dynamic)  server-rendered on demand
+
