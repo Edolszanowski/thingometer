@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import type { Float } from "@/lib/drizzle/schema"
+import type { UiLabels } from "@/lib/labels"
 
 interface Winner {
   float: Float
@@ -9,9 +10,10 @@ interface Winner {
 interface AdminWinnerCardProps {
   title: string
   winners: Winner[]
+  labels?: UiLabels
 }
 
-export function AdminWinnerCard({ title, winners }: AdminWinnerCardProps) {
+export function AdminWinnerCard({ title, winners, labels }: AdminWinnerCardProps) {
   if (winners.length === 0) {
     return (
       <Card className="border-2">
@@ -36,7 +38,7 @@ export function AdminWinnerCard({ title, winners }: AdminWinnerCardProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-bold text-lg">
-                  Float #{winner.float.floatNumber}
+                  {(labels?.entryNumber ?? "Float #")}{winner.float.floatNumber}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {winner.float.organization}

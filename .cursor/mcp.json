@@ -1,26 +1,10 @@
 {
-  "servers": {
-    "supabase": {
-      "command": "supabase-mcp",
-      "args": [
-        "--url", "SUPABASE_URL=https://vctvjltbzqkwowjspzdq.supabase.co",
-        "--anon", "SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjdHZqbHRienFrd293anNwemRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQzODcxODUsImV4cCI6MjA3OTk2MzE4NX0.dN7lwu79GFRo6fue4CKhaRo2RM0-_COKtBTee0rN05U",
-        "--service", "SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZjdHZqbHRienFrd293anNwemRxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDM4NzE4NSwiZXhwIjoyMDc5OTYzMTg1fQ.ztoZJwiudoiLxckQwNZ512jjpTlOS-VXLi5MgNY6fU4"
-        ]
-        },
-      "neon": {
-        "url": "https://mcp.neon.tech/mcp",
-        "headers": {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer YOUR_NEON_API_KEY"
-        }
-      },
-      "n8n": {
-        "url": "http://localhost:8080/mcp",
-        "headers": {
-          "Content-Type": "application/json"
-        }
-      }
+  "mcpServers": {
+    "supabase-thingometer": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=dhbfoprdihrsqjawmmxc"
+    },
+    "supabase-pms-readonly": {
+      "url": "https://mcp.supabase.com/mcp?project_ref=vctvjltbzqkwowjspzdq"
     }
   }
-  
+}

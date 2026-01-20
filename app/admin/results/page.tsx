@@ -11,6 +11,9 @@ import { toast } from "sonner"
 import Link from "next/link"
 import type { Float } from "@/lib/drizzle/schema"
 import { useRealtimeCallback } from "@/hooks/useRealtimeData"
+import { getLabelsForEvent } from "@/app/actions"
+import type { UiLabels } from "@/lib/labels"
+import { getDefaultLabels } from "@/lib/labels"
 
 interface Winner {
   float: Float
@@ -50,6 +53,7 @@ export default function AdminResultsPage() {
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
   const [eventName, setEventName] = useState<string>("")
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [labels, setLabels] = useState<UiLabels>(getDefaultLabels())
 
   // Initialize selectedEventId from cookie on mount
   useEffect(() => {
@@ -59,6 +63,23 @@ export default function AdminResultsPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Load event-specific labels (server action) when selectedEventId changes
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      try {
+        const next = await getLabelsForEvent(selectedEventId)
+        if (!cancelled) setLabels(next)
+      } catch (err) {
+        if (!cancelled) setLabels(getDefaultLabels())
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedEventId])
 
   const fetchData = useCallback(async () => {
     const password = getAdminPassword()
@@ -238,7 +259,7 @@ export default function AdminResultsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-xl sm:text-2xl font-bold">Category Winners</h2>
           {winners && (
-            <WinnersFullscreen winners={winners} eventName={eventName} />
+            <WinnersFullscreen winners={winners} eventName={eventName} labels={labels} />
           )}
         </div>
 
@@ -257,6 +278,7 @@ export default function AdminResultsPage() {
                           key={categoryName}
                           title={title}
                           winners={categoryWinners}
+                          labels={labels}
                         />
                       )
                     }
@@ -266,6 +288,7 @@ export default function AdminResultsPage() {
                         key={categoryName}
                         title={`Best ${categoryName}`}
                         winners={categoryWinners}
+                        labels={labels}
                       />
                     )
                   })}
@@ -276,26 +299,32 @@ export default function AdminResultsPage() {
                   <AdminWinnerCard
                     title="Best Lighting"
                     winners={winners.bestLighting}
+                    labels={labels}
                   />
                   <AdminWinnerCard
                     title="Best Theme"
                     winners={winners.bestTheme}
+                    labels={labels}
                   />
                   <AdminWinnerCard
                     title="Best Traditions"
                     winners={winners.bestTraditions}
+                    labels={labels}
                   />
                   <AdminWinnerCard
                     title="Best Spirit"
                     winners={winners.bestSpirit}
+                    labels={labels}
                   />
                   <AdminWinnerCard
                     title="Best Music"
                     winners={winners.bestMusic}
+                    labels={labels}
                   />
                   <AdminWinnerCard
                     title="Best Overall Entry"
                     winners={winners.bestOverall}
+                    labels={labels}
                   />
                 </>
               )}

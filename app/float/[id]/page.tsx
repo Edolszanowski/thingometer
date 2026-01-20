@@ -8,6 +8,7 @@ import { NavigationButtons } from "@/components/NavigationButtons"
 import { QuickJumpBar } from "@/components/QuickJumpBar"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { loadLabelsForEventId } from "@/lib/labels"
 
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic'
@@ -46,6 +47,7 @@ export default async function FloatPage({
 
   const floatData = float[0]
   const eventId = floatData.eventId
+  const labels = await loadLabelsForEventId(eventId)
 
   if (!eventId) {
     redirect("/floats")
@@ -139,11 +141,12 @@ export default async function FloatPage({
         totalFloats={totalFloats}
         currentFloatId={floatId}
         scoredFloatIds={scoredFloatIds}
+        labels={labels}
       />
       <div className="container mx-auto px-4 py-6">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2" style={{ color: "#DC2626" }}>
-            Float #{floatData.floatNumber}
+            {(labels.entryNumber ?? "Float #")}{floatData.floatNumber}
           </h1>
           <p className="text-lg text-muted-foreground">
             {floatData.organization}
@@ -165,6 +168,7 @@ export default async function FloatPage({
         <NavigationButtons
           previousFloat={previousFloat}
           nextFloat={nextFloat}
+          labels={labels}
         />
       </div>
     </div>

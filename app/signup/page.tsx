@@ -8,6 +8,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
 import { isCoordinator } from "@/lib/auth"
+import { getEntryAttributesForEvent, getLabelsForEvent } from "@/app/actions"
+import { getDefaultLabels } from "@/lib/labels"
+import type { UiLabels } from "@/lib/labels"
 
 // Predefined type of entry options from CSV data
 const TYPE_OF_ENTRY_OPTIONS = [
@@ -42,6 +45,16 @@ const TYPE_OF_ENTRY_OPTIONS = [
   "Other",
 ]
 
+type ExtraField = {
+  key: string
+  label: string
+  type: "text" | "textarea" | "number" | "select" | "boolean"
+  required?: boolean
+  placeholder?: string
+  options?: string[]
+  helpText?: string
+}
+
 function SignUpPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -51,6 +64,9 @@ function SignUpPageContent() {
   const [eventId, setEventId] = useState<number | null>(null)
   const [eventData, setEventData] = useState<{ name: string; city: string } | null>(null)
   const [checkingEvent, setCheckingEvent] = useState(true)
+  const [labels, setLabels] = useState<UiLabels>(getDefaultLabels())
+  const [extraFields, setExtraFields] = useState<ExtraField[]>([])
+  const [metadata, setMetadata] = useState<Record<string, unknown>>({})
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -119,6 +135,63 @@ function SignUpPageContent() {
       setCheckingEvent(false)
     }
   }, [searchParams])
+
+  // Load event-specific labels (server action) when eventId is known
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      if (!eventId) {
+        setLabels(getDefaultLabels())
+        return
+      }
+      try {
+        const next = await getLabelsForEvent(eventId)
+        if (!cancelled) setLabels(next)
+      } catch {
+        if (!cancelled) setLabels(getDefaultLabels())
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
+
+  // Load event-configured extra entry fields (stored to floats.metadata)
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      if (!eventId) {
+        setExtraFields([])
+        setMetadata({})
+        return
+      }
+      try {
+        const cfg = await getEntryAttributesForEvent(eventId)
+        const fields = Array.isArray(cfg?.extraFields) ? (cfg.extraFields as ExtraField[]) : []
+        if (!cancelled) {
+          setExtraFields(fields)
+          // Keep existing values for keys that still exist; drop removed keys.
+          setMetadata((prev) => {
+            const next: Record<string, unknown> = {}
+            for (const f of fields) {
+              next[f.key] = prev[f.key] ?? (f.type === "boolean" ? false : "")
+            }
+            return next
+          })
+        }
+      } catch {
+        if (!cancelled) {
+          setExtraFields([])
+          setMetadata({})
+        }
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [eventId])
 
   const checkActiveEvents = async () => {
     try {
@@ -199,7 +272,7 @@ function SignUpPageContent() {
         return
       }
       if (!formData.floatDescription.trim()) {
-        toast.error("Float Description is required")
+        toast.error(`${labels.entryDescription} is required`)
         setLoading(false)
         return
       }
@@ -221,6 +294,22 @@ function SignUpPageContent() {
         toast.error("Type of Entry is required")
         setLoading(false)
         return
+      }
+
+      // Validate required dynamic fields (extraFields -> floats.metadata)
+      for (const f of extraFields) {
+        if (!f.required) continue
+        const v = metadata[f.key]
+        const isEmpty =
+          v == null ||
+          (typeof v === "string" && v.trim() === "") ||
+          (typeof v === "number" && Number.isNaN(v))
+
+        if (isEmpty) {
+          toast.error(`${f.label} is required`)
+          setLoading(false)
+          return
+        }
       }
 
       const response = await fetch("/api/entries", {
@@ -247,6 +336,7 @@ function SignUpPageContent() {
           comments: formData.comments.trim() || null,
           eventId: eventId,
           autoApprove: isCoordinatorUser ? formData.autoApprove : false,
+          metadata,
         }),
       })
 
@@ -260,7 +350,7 @@ function SignUpPageContent() {
       const result = await response.json()
       
       if (result.autoApproved) {
-        toast.success(`🎉 Float #${result.floatNumber} added and ready for judging!`)
+        toast.success(`🎉 ${(labels.entryNumber ?? "Float #")}${result.floatNumber} added and ready for judging!`)
       } else {
         toast.success("Entry submitted successfully! It will be reviewed by the coordinator.")
       }
@@ -541,16 +631,16 @@ function SignUpPageContent() {
               />
             </div>
 
-            {/* Float Description */}
+            {/* Entry Description */}
             <div>
               <label htmlFor="floatDescription" className="block text-sm font-medium mb-1">
-                Float Description <span className="text-red-500">*</span>
+                {labels.entryDescription} <span className="text-red-500">*</span>
               </label>
               <Textarea
                 id="floatDescription"
                 value={formData.floatDescription}
                 onChange={(e) => setFormData({ ...formData, floatDescription: e.target.value })}
-                placeholder="Describe your float, what it represents, and any special features..."
+                placeholder={`Describe your ${labels.entry.toLowerCase()}, what it represents, and any special features...`}
                 rows={5}
                 required
               />
@@ -644,6 +734,118 @@ function SignUpPageContent() {
               />
             </div>
 
+            {/* Event-configurable extra fields (stored in metadata) */}
+            {extraFields.length > 0 && (
+              <div className="space-y-4">
+                <div className="pt-2">
+                  <h3 className="text-lg font-semibold">Additional Information</h3>
+                  <p className="text-sm text-muted-foreground">
+                    These questions may vary by event.
+                  </p>
+                </div>
+
+                {extraFields.map((f) => {
+                  const value = metadata[f.key]
+                  const baseLabel = (
+                    <>
+                      {f.label} {f.required && <span className="text-red-500">*</span>}
+                    </>
+                  )
+
+                  if (f.type === "textarea") {
+                    return (
+                      <div key={f.key}>
+                        <label className="block text-sm font-medium mb-1">{baseLabel}</label>
+                        {f.helpText && (
+                          <p className="text-xs text-muted-foreground mb-2">{f.helpText}</p>
+                        )}
+                        <Textarea
+                          value={typeof value === "string" ? value : String(value ?? "")}
+                          onChange={(e) =>
+                            setMetadata((prev) => ({ ...prev, [f.key]: e.target.value }))
+                          }
+                          placeholder={f.placeholder}
+                          rows={4}
+                        />
+                      </div>
+                    )
+                  }
+
+                  if (f.type === "select") {
+                    return (
+                      <div key={f.key}>
+                        <label className="block text-sm font-medium mb-1">{baseLabel}</label>
+                        {f.helpText && (
+                          <p className="text-xs text-muted-foreground mb-2">{f.helpText}</p>
+                        )}
+                        <select
+                          value={typeof value === "string" ? value : String(value ?? "")}
+                          onChange={(e) =>
+                            setMetadata((prev) => ({ ...prev, [f.key]: e.target.value }))
+                          }
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="">Select...</option>
+                          {(f.options || []).map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )
+                  }
+
+                  if (f.type === "boolean") {
+                    const checked = Boolean(value)
+                    return (
+                      <div key={f.key} className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) =>
+                            setMetadata((prev) => ({ ...prev, [f.key]: e.target.checked }))
+                          }
+                          className="mt-1 h-4 w-4"
+                        />
+                        <div>
+                          <label className="text-sm font-medium">{baseLabel}</label>
+                          {f.helpText && (
+                            <p className="text-xs text-muted-foreground">{f.helpText}</p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  }
+
+                  // text | number default
+                  return (
+                    <div key={f.key}>
+                      <label className="block text-sm font-medium mb-1">{baseLabel}</label>
+                      {f.helpText && (
+                        <p className="text-xs text-muted-foreground mb-2">{f.helpText}</p>
+                      )}
+                      <Input
+                        type={f.type === "number" ? "number" : "text"}
+                        value={
+                          typeof value === "number"
+                            ? String(value)
+                            : (typeof value === "string" ? value : String(value ?? ""))
+                        }
+                        onChange={(e) =>
+                          setMetadata((prev) => ({
+                            ...prev,
+                            [f.key]: f.type === "number" ? Number(e.target.value) : e.target.value,
+                          }))
+                        }
+                        placeholder={f.placeholder}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
             {/* Coordinator: Auto-approve option for last-minute entries */}
             {isCoordinatorUser && (
               <div className="p-4 rounded-lg border-2 border-green-500 bg-green-50">
@@ -659,7 +861,7 @@ function SignUpPageContent() {
                       ⚡ Add as Last-Minute Entry
                     </span>
                     <p className="text-sm text-green-700 mt-1">
-                      Auto-approve and assign float number immediately. 
+                      Auto-approve and assign {labels.entry.toLowerCase()} number immediately. 
                       Judges will see this entry right away.
                     </p>
                   </div>

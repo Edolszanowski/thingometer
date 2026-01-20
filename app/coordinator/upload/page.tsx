@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -8,22 +8,9 @@ import { toast } from "sonner"
 import { Upload, RefreshCw, FileText, ArrowLeft, FileSpreadsheet } from "lucide-react"
 import { getCoordinatorEventId } from "@/components/EventSelector"
 import * as XLSX from "xlsx"
-
-// Database field options for mapping
-const DB_FIELDS = [
-  { value: "firstName", label: "First Name" },
-  { value: "lastName", label: "Last Name" },
-  { value: "organization", label: "Organization Name", required: true },
-  { value: "title", label: "Title" },
-  { value: "phone", label: "Phone", required: false },
-  { value: "email", label: "Email", required: false },
-  { value: "floatDescription", label: "Float Description", required: false },
-  { value: "entryLength", label: "Entry Length" },
-  { value: "typeOfEntry", label: "Type of Entry" },
-  { value: "hasMusic", label: "Has Music" },
-  { value: "comments", label: "Comments" },
-  { value: "floatNumber", label: "Float Number" },
-]
+import { getLabelsForEvent } from "@/app/actions"
+import { getDefaultLabels } from "@/lib/labels"
+import type { UiLabels } from "@/lib/labels"
 
 function getAdminPassword(): string | null {
   if (typeof document === "undefined") return null
@@ -34,6 +21,7 @@ function getAdminPassword(): string | null {
 
 export default function CoordinatorUploadPage() {
   const router = useRouter()
+  const [labels, setLabels] = useState<UiLabels>(getDefaultLabels())
   const [file, setFile] = useState<File | null>(null)
   const [fileType, setFileType] = useState<'csv' | 'xlsx'>('csv')
   const [csvHeaders, setCsvHeaders] = useState<string[]>([])
@@ -46,6 +34,42 @@ export default function CoordinatorUploadPage() {
   const [sheetNames, setSheetNames] = useState<string[]>([])
   const [selectedSheet, setSelectedSheet] = useState<string>('')
   const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      const eventId = getCoordinatorEventId()
+      try {
+        const next = await getLabelsForEvent(eventId)
+        if (!cancelled) setLabels(next)
+      } catch {
+        if (!cancelled) setLabels(getDefaultLabels())
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Database field options for mapping (labels are dynamic, data fields remain the same)
+  const DB_FIELDS = useMemo(
+    () => [
+      { value: "firstName", label: "First Name" },
+      { value: "lastName", label: "Last Name" },
+      { value: "organization", label: "Organization Name", required: true },
+      { value: "title", label: "Title" },
+      { value: "phone", label: "Phone", required: false },
+      { value: "email", label: "Email", required: false },
+      { value: "floatDescription", label: labels.entryDescription, required: false },
+      { value: "entryLength", label: "Entry Length" },
+      { value: "typeOfEntry", label: "Type of Entry" },
+      { value: "hasMusic", label: "Has Music" },
+      { value: "comments", label: "Comments" },
+      { value: "floatNumber", label: `${labels.entry} Number` },
+    ],
+    [labels]
+  )
 
   const parseCSVFile = async (file: File, useFirstRowAsHeaders: boolean) => {
     try {

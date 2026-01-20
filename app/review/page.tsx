@@ -15,6 +15,7 @@ import { SubmitButton } from "@/components/SubmitButton"
 import { LogoutButton } from "@/components/LogoutButton"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { loadLabelsForEventId } from "@/lib/labels"
 
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic'
@@ -39,6 +40,7 @@ export default async function ReviewPage() {
 
   const isSubmitted = judge[0].submitted
   const judgeEventId = judge[0].eventId
+  const labels = await loadLabelsForEventId(judgeEventId)
 
   // Get all approved floats - filter by event if judge has eventId
   let floats
@@ -172,7 +174,7 @@ export default async function ReviewPage() {
                 {isSubmitted ? "Final Scores" : "Review Scores"}
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground">
-                {scoredCount} of {totalCount} floats scored
+                {scoredCount} of {totalCount} {labels.entryPlural.toLowerCase()} scored
                 {isSubmitted && (
                   <span className="ml-2 text-[#DC2626] font-semibold">• Locked</span>
                 )}

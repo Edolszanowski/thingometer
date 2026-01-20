@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { X, Printer, Maximize2 } from "lucide-react"
 import type { Float } from "@/lib/drizzle/schema"
+import type { UiLabels } from "@/lib/labels"
 
 interface Winner {
   float: Float
@@ -24,9 +25,10 @@ interface WinnersData {
 interface WinnersFullscreenProps {
   winners: WinnersData
   eventName?: string
+  labels?: UiLabels
 }
 
-export function WinnersFullscreen({ winners, eventName }: WinnersFullscreenProps) {
+export function WinnersFullscreen({ winners, eventName, labels }: WinnersFullscreenProps) {
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   const handlePrint = () => {
@@ -50,7 +52,7 @@ export function WinnersFullscreen({ winners, eventName }: WinnersFullscreenProps
                 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                   <div>
                     <p style="font-weight: bold; font-size: 18px; color: #14532D; margin: 0;">
-                      🏅 Float #${winner.float.floatNumber}
+                      🏅 ${(labels?.entryNumber ?? "Float #")}${winner.float.floatNumber}
                     </p>
                     <p style="font-size: 14px; margin: 4px 0 0 0;">
                       ${winner.float.organization}
@@ -76,7 +78,7 @@ export function WinnersFullscreen({ winners, eventName }: WinnersFullscreenProps
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Parade Winners${eventName ? ` - ${eventName}` : ''}</title>
+          <title>Winners${eventName ? ` - ${eventName}` : ''}</title>
           <style>
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -117,7 +119,7 @@ export function WinnersFullscreen({ winners, eventName }: WinnersFullscreenProps
         </head>
         <body>
           <div class="header">
-            <h1>🏆 Parade Winners 🏆</h1>
+            <h1>🏆 Winners 🏆</h1>
             ${eventName ? `<p style="font-size: 18px; color: #4b5563;">${eventName}</p>` : ''}
             <p>Generated on ${new Date().toLocaleDateString()}</p>
           </div>
@@ -125,7 +127,7 @@ export function WinnersFullscreen({ winners, eventName }: WinnersFullscreenProps
             ${categoriesHtml}
           </div>
           <div class="footer">
-            <p>Parade Management System • iThrive AI</p>
+            <p>Thingometer • iThrive AI</p>
           </div>
         </body>
       </html>
@@ -249,7 +251,7 @@ export function WinnersFullscreen({ winners, eventName }: WinnersFullscreenProps
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <p className="font-bold text-lg" style={{ color: "#14532D" }}>
-                            🏅 Float #{winner.float.floatNumber}
+                            🏅 {(labels?.entryNumber ?? "Float #")}{winner.float.floatNumber}
                           </p>
                           <p className="text-sm font-medium">
                             {winner.float.organization}

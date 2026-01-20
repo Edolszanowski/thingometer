@@ -10,6 +10,9 @@ import { RefreshCw, Check, X, Eye } from "lucide-react"
 import { EventSelector, getCoordinatorEventId } from "@/components/EventSelector"
 import { ParticipantLookup } from "@/components/ParticipantLookup"
 import { useRealtimeCallback } from "@/hooks/useRealtimeData"
+import { getLabelsForEvent } from "@/app/actions"
+import { getDefaultLabels } from "@/lib/labels"
+import type { UiLabels } from "@/lib/labels"
 
 interface UnapprovedEntry {
   id: number
@@ -43,6 +46,7 @@ export default function CoordinatorApprovePage() {
   const [viewing, setViewing] = useState<number | null>(null)
   const [floatNumberInput, setFloatNumberInput] = useState<{ [key: number]: string }>({})
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
+  const [labels, setLabels] = useState<UiLabels>(getDefaultLabels())
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
 
   const fetchEntries = useCallback(async (eventId: number | null = null) => {
@@ -85,6 +89,22 @@ export default function CoordinatorApprovePage() {
     setSelectedEventId(eventId)
     fetchEntries(eventId)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      try {
+        const next = await getLabelsForEvent(selectedEventId)
+        if (!cancelled) setLabels(next)
+      } catch {
+        if (!cancelled) setLabels(getDefaultLabels())
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [selectedEventId])
 
   const handleEventChange = (eventId: number | null) => {
     setSelectedEventId(eventId)
@@ -303,7 +323,7 @@ export default function CoordinatorApprovePage() {
                         <div className="flex flex-col gap-2">
                           <Input
                             type="number"
-                            placeholder="Float # (optional)"
+                            placeholder={`${labels.entryNumber} (optional)`}
                             value={floatNumberInput[entry.id] || ""}
                             onChange={(e) =>
                               setFloatNumberInput({ ...floatNumberInput, [entry.id]: e.target.value })

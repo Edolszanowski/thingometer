@@ -5,13 +5,15 @@ import { Button } from "@/components/ui/button"
 import { saveManager } from "@/lib/save-manager"
 import { useState } from "react"
 import { toast } from "sonner"
+import type { UiLabels } from "@/lib/labels"
 
 interface NavigationButtonsProps {
   previousFloat: { id: number } | null
   nextFloat: { id: number } | null
+  labels?: UiLabels
 }
 
-export function NavigationButtons({ previousFloat, nextFloat }: NavigationButtonsProps) {
+export function NavigationButtons({ previousFloat, nextFloat, labels }: NavigationButtonsProps) {
   const router = useRouter()
   const [navigating, setNavigating] = useState(false)
 
@@ -68,7 +70,7 @@ export function NavigationButtons({ previousFloat, nextFloat }: NavigationButton
           onClick={() => handleNavigation(`/float/${previousFloat.id}`)}
           disabled={navigating}
         >
-          ◀ Previous Float
+          ◀ Previous {labels?.entry ?? "Float"}
         </Button>
       ) : (
         <Button
@@ -76,7 +78,7 @@ export function NavigationButtons({ previousFloat, nextFloat }: NavigationButton
           disabled
           className="flex-1 h-12"
         >
-          ◀ Previous Float
+          ◀ Previous {labels?.entry ?? "Float"}
         </Button>
       )}
 
@@ -87,7 +89,7 @@ export function NavigationButtons({ previousFloat, nextFloat }: NavigationButton
         onClick={() => handleNavigation("/floats")}
         disabled={navigating}
       >
-        Back to Float List
+        Back to {labels?.entry ?? "Float"} List
       </Button>
 
       {nextFloat ? (
@@ -98,7 +100,7 @@ export function NavigationButtons({ previousFloat, nextFloat }: NavigationButton
           onClick={() => handleNavigation(`/float/${nextFloat.id}`)}
           disabled={navigating}
         >
-          Next Float ▶
+          Next {labels?.entry ?? "Float"} ▶
         </Button>
       ) : (
         <Button
@@ -106,7 +108,7 @@ export function NavigationButtons({ previousFloat, nextFloat }: NavigationButton
           disabled
           className="flex-1 h-12"
         >
-          Next Float ▶
+          Next {labels?.entry ?? "Float"} ▶
         </Button>
       )}
     </div>

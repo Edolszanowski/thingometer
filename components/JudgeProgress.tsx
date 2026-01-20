@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react"
 import { FloatGrid } from "./FloatGrid"
 import { QuickJumpBar } from "./QuickJumpBar"
 import { getJudgeIdClient } from "@/lib/cookies-client"
+import type { UiLabels } from "@/lib/labels"
 
 type ScoreStatus = 'not_started' | 'incomplete' | 'complete' | 'no_show' | 'no_organization' | 'not_found'
 
@@ -17,9 +18,10 @@ interface JudgeProgressProps {
   judgeName: string
   totalFloats: number
   initialFloats?: FloatWithScore[]
+  labels?: UiLabels
 }
 
-export function JudgeProgress({ judgeName, totalFloats, initialFloats }: JudgeProgressProps) {
+export function JudgeProgress({ judgeName, totalFloats, initialFloats, labels }: JudgeProgressProps) {
   // Start with null to indicate "loading" - don't show incorrect "0 of X"
   const [scoredCount, setScoredCount] = useState<number | null>(null)
   const [totalCount, setTotalCount] = useState<number | null>(null)
@@ -86,7 +88,7 @@ export function JudgeProgress({ judgeName, totalFloats, initialFloats }: JudgePr
           ) : (
             <>
               <span className="text-sm text-muted-foreground">
-                Progress: <strong>{scoredCount}</strong> of <strong>{totalCount}</strong> floats completed
+                Progress: <strong>{scoredCount}</strong> of <strong>{totalCount}</strong> {labels?.entryPlural ?? "floats"} completed
               </span>
               <div className="flex-1 max-w-xs h-2 bg-gray-200 rounded-full overflow-hidden">
                 <div 
@@ -106,11 +108,13 @@ export function JudgeProgress({ judgeName, totalFloats, initialFloats }: JudgePr
         totalFloats={totalFloats}
         currentFloatId={undefined}
         scoredFloatIds={scoredFloatIds}
+        labels={labels}
       />
       
       <FloatGrid 
         initialFloats={initialFloats as any} 
         onProgressUpdate={handleProgressUpdate}
+        labels={labels}
       />
     </>
   )

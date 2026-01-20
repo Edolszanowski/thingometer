@@ -7,6 +7,7 @@ import type { Float } from "@/lib/drizzle/schema"
 import type { Score } from "@/lib/drizzle/schema"
 import { getJudgeIdClient } from "@/lib/cookies-client"
 import { useRealtimeCallback } from "@/hooks/useRealtimeData"
+import type { UiLabels } from "@/lib/labels"
 
 type ScoreStatus = 'not_started' | 'incomplete' | 'complete' | 'no_show' | 'no_organization' | 'not_found'
 
@@ -19,9 +20,10 @@ interface FloatWithScore extends Float {
 interface FloatGridProps {
   initialFloats?: FloatWithScore[]
   onProgressUpdate?: (completed: number, total: number) => void
+  labels?: UiLabels
 }
 
-export function FloatGrid({ initialFloats, onProgressUpdate }: FloatGridProps) {
+export function FloatGrid({ initialFloats, onProgressUpdate, labels }: FloatGridProps) {
   // CRITICAL: Always start with empty array to force fresh fetch from API
   // Server-side data may be stale - API is the single source of truth
   const [floats, setFloats] = useState<FloatWithScore[]>([])
@@ -155,7 +157,7 @@ export function FloatGrid({ initialFloats, onProgressUpdate }: FloatGridProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p>Loading floats...</p>
+        <p>Loading {labels?.entryPlural ?? "floats"}...</p>
       </div>
     )
   }
@@ -166,7 +168,7 @@ export function FloatGrid({ initialFloats, onProgressUpdate }: FloatGridProps) {
       {lastUpdate && (
         <div className="mb-4 flex items-center justify-end gap-2 text-xs text-gray-500">
           <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-          <span>Live • {floats.length} floats</span>
+          <span>Live • {floats.length} {labels?.entryPlural ?? "floats"}</span>
         </div>
       )}
       
@@ -178,6 +180,7 @@ export function FloatGrid({ initialFloats, onProgressUpdate }: FloatGridProps) {
             score={float.score}
             scored={float.scored}
             scoreStatus={float.scoreStatus}
+            labels={labels}
           />
         ))}
       </div>

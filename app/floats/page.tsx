@@ -6,6 +6,7 @@ import { eq, asc, and, inArray } from "drizzle-orm"
 import { JudgeProgress } from "@/components/JudgeProgress"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { loadLabelsForEventId } from "@/lib/labels"
 
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic'
@@ -30,6 +31,7 @@ export default async function FloatsPage() {
 
   const judgeName = judge[0].name
   const judgeEventId = judge[0].eventId
+  const labels = await loadLabelsForEventId(judgeEventId)
 
   // Get city ID from cookie
   const cookieStore = await cookies()
@@ -224,6 +226,7 @@ export default async function FloatsPage() {
         judgeName={judgeName}
         totalFloats={totalFloats}
         initialFloats={floatsWithScores}
+        labels={labels}
       />
     </div>
   )

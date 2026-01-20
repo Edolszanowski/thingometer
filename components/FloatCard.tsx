@@ -6,6 +6,7 @@ import { toast } from "sonner"
 import type { Float } from "@/lib/drizzle/schema"
 import type { Score } from "@/lib/drizzle/schema"
 import { saveManager } from "@/lib/save-manager"
+import type { UiLabels } from "@/lib/labels"
 
 type ScoreStatus = 'not_started' | 'incomplete' | 'complete' | 'no_show' | 'no_organization' | 'not_found'
 
@@ -14,9 +15,10 @@ interface FloatCardProps {
   score: Score | null
   scored: boolean
   scoreStatus?: ScoreStatus
+  labels?: UiLabels
 }
 
-export function FloatCard({ float, score, scored, scoreStatus = 'not_started' }: FloatCardProps) {
+export function FloatCard({ float, score, scored, scoreStatus = 'not_started', labels }: FloatCardProps) {
   const router = useRouter()
 
   const handleClick = async () => {
@@ -85,7 +87,7 @@ export function FloatCard({ float, score, scored, scoreStatus = 'not_started' }:
       <CardContent className="p-4">
         <div className="flex flex-col space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-lg">Float #{float.floatNumber}</h3>
+            <h3 className="font-bold text-lg">{labels?.entryNumber ?? "Float #"}{float.floatNumber}</h3>
             {statusText && (
               <span className={`text-sm font-semibold ${statusColor}`}>
                 {statusText}

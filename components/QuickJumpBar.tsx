@@ -6,11 +6,13 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { getJudgeIdClient } from "@/lib/cookies-client"
 import { saveManager } from "@/lib/save-manager"
+import type { UiLabels } from "@/lib/labels"
 
 interface QuickJumpBarProps {
   totalFloats: number
   currentFloatId?: number
   scoredFloatIds?: Set<number>
+  labels?: UiLabels
 }
 
 type ScoreStatus = 'not_started' | 'incomplete' | 'complete' | 'no_show' | 'no_organization' | 'not_found'
@@ -25,6 +27,7 @@ export function QuickJumpBar({
   totalFloats,
   currentFloatId,
   scoredFloatIds: initialScoredFloatIds = new Set(),
+  labels,
 }: QuickJumpBarProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -240,7 +243,7 @@ export function QuickJumpBar({
                   disabled
                   className={buttonClass + " opacity-50 cursor-not-allowed"}
                   type="button"
-                  title="Float not found"
+                  title={`${labels?.entry ?? "Float"} not found`}
                 >
                   {floatNumber}
                 </button>

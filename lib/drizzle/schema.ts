@@ -29,6 +29,17 @@ export const events = pgTable("events", {
   active: boolean("active").notNull().default(true), // Whether this event is currently active
   positionMode: text("position_mode").default("preplanned").$type<"preplanned" | "jit">(), // JIT release mode
   entryCategoryTitle: text("entry_category_title").default("Best Entry"), // Customizable title for the overall/entry category
+  entryAttributes: jsonb("entry_attributes").$type<{
+    extraFields?: Array<{
+      key: string
+      label: string
+      type: "text" | "textarea" | "number" | "select" | "boolean"
+      required?: boolean
+      placeholder?: string
+      options?: string[]
+      helpText?: string
+    }>
+  }>().default({ extraFields: [] }),
   scoringCategories: jsonb("scoring_categories").$type<Array<{
     name: string
     required?: boolean
@@ -122,6 +133,7 @@ export const floats = pgTable("floats", {
   hasMusic: boolean("has_music").notNull().default(false),
   approved: boolean("approved").notNull().default(false),
   submittedAt: timestamp("submitted_at"),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
 })
 
 // ============================================================================

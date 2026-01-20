@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
       comments,
       eventId: providedEventId,
       autoApprove, // Coordinator can auto-approve for last-minute entries
+      metadata,
     } = body
 
     // Validate required fields
@@ -234,6 +235,11 @@ export async function POST(request: NextRequest) {
       submittedAt: new Date(),
       floatNumber: nextFloatNumber, // Assign number if auto-approved
     }
+
+    // Store dynamic/custom fields into floats.metadata (if provided)
+    if (metadata && typeof metadata === "object") {
+      entryData.metadata = metadata
+    }
     
     // Store organization contact info in comments if different from driver
     if (phone.trim() !== driverPhone.trim() || email.trim() !== driverEmail.trim()) {
@@ -257,10 +263,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const newEntry = await db
-      .insert(schema.floats)
-      .values(entryData)
-      .returning()
+    let newEntry
+    try {
+      newEntry = await db
+        .insert(schema.floats)
+        .values(entryData)
+        .returning()
+    } catch (error: any) {
+      // Backward compatibility if metadata column hasn't been migrated yet
+      const msg = String(error?.message || "")
+      if (
+        (error?.code === "42703" || msg.includes("does not exist")) &&
+        (msg.includes("metadata") || msg.includes("column"))
+      ) {
+        delete entryData.metadata
+        newEntry = await db
+          .insert(schema.floats)
+          .values(entryData)
+          .returning()
+      } else {
+        throw error
+      }
+    }
 
     const message = shouldAutoApprove
       ? `Entry added as Float #${nextFloatNumber} and is ready for judging!`
