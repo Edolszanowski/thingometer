@@ -108,11 +108,13 @@ export default function JudgeMapPage() {
       const loader = new Loader({
         apiKey,
         version: "weekly",
-        libraries: ["marker"],
+        libraries: ["places", "marker"],
       })
 
-      const { Map } = await loader.importLibrary("maps") as google.maps.MapsLibrary
-      const { Marker } = await loader.importLibrary("marker") as google.maps.MarkerLibrary
+      await loader.load()
+      
+      const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary
+      const { Marker } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary
 
       // Calculate center point from all stands
       const validStands = stands.filter(
