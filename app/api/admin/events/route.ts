@@ -91,7 +91,8 @@ export async function POST(request: NextRequest) {
       endDate,
       active = true,
       scoringCategories,
-      judges 
+      judges,
+      type
     } = body
 
     if (!name || !city) {
@@ -110,6 +111,7 @@ export async function POST(request: NextRequest) {
           city,
           eventDate: eventDate ? new Date(eventDate) : (startDate ? new Date(startDate) : null),
           active: active ?? true,
+          type: type || null,
         })
         .returning()
 
