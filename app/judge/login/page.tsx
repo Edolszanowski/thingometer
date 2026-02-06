@@ -9,7 +9,9 @@ type Judge = {
 }
 
 function setCookie(name: string, value: string, maxAgeSeconds: number) {
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}`
+  const isProduction = window.location.protocol === 'https:'
+  const secureFlag = isProduction ? '; secure' : ''
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; samesite=lax${secureFlag}`
 }
 
 function JudgeLoginInner() {
