@@ -422,12 +422,4 @@ export default function JudgeMapPage() {
       </div>
     </div>
   )
-
-  function openDirections(placeId: string) {
-    // CRITICAL SAFETY: Use Place ID for directions, NOT coordinates
-    window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=place_id:${placeId}`,
-      "_blank"
-    )
-  }
 }
