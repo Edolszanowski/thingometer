@@ -53,3 +53,25 @@ export function getCookie(name: string): string | null {
   const value = cookie.split('=')[1]
   return value ? decodeURIComponent(value) : null
 }
+
+/**
+ * Get the current judge ID from cookies (client-side)
+ * Checks both parade-judge-id-client and parade-judge-id cookies
+ * Returns null if not logged in as a judge
+ */
+export function getJudgeIdClient(): number | null {
+  if (typeof document === 'undefined') return null
+  
+  // Check for client-side cookie first (set by login page)
+  let value = getCookie('parade-judge-id-client')
+  
+  // Fallback to server-side cookie if client cookie not found
+  if (!value) {
+    value = getCookie('parade-judge-id')
+  }
+  
+  if (!value) return null
+  
+  const parsed = parseInt(value, 10)
+  return isNaN(parsed) ? null : parsed
+}
