@@ -9,16 +9,29 @@ function verifyAdminPassword(request: NextRequest): boolean {
   const password = process.env.ADMIN_PASSWORD
 
   if (!password) {
+    console.error("[admin/judges] ADMIN_PASSWORD environment variable is not set")
     return false
   }
 
   if (authHeader && authHeader.startsWith("Bearer ")) {
-    return authHeader.substring(7) === password
+    const providedPassword = authHeader.substring(7)
+    const isValid = providedPassword === password
+    if (!isValid) {
+      console.log("[admin/judges] Bearer auth failed - password mismatch")
+    }
+    return isValid
   }
 
   const searchParams = request.nextUrl.searchParams
   const queryPassword = searchParams.get("password")
-  return queryPassword === password
+  const isValid = queryPassword === password
+  
+  if (!isValid) {
+    console.log("[admin/judges] Query password failed - password mismatch")
+    console.log("[admin/judges] Expected length:", password.length, "Received length:", queryPassword?.length || 0)
+  }
+  
+  return isValid
 }
 
 async function verifyCityAccess(cityId: number | null, userEmail?: string): Promise<boolean> {
