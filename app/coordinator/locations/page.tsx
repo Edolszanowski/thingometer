@@ -67,7 +67,7 @@ export default function CoordinatorLocationsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin/dashboard")
+        router.push("/admin")
         return
       }
 
@@ -84,7 +84,7 @@ export default function CoordinatorLocationsPage() {
           
           if (!isLD) {
             toast.error("Stand locations are only available for Lemonade Day events")
-            router.push("/coordinator")
+            router.push("/coordinator/approve")
             return
           }
         }
@@ -96,7 +96,7 @@ export default function CoordinatorLocationsPage() {
       )
 
       if (response.status === 401) {
-        router.push("/admin/dashboard")
+        router.push("/admin")
         return
       }
 

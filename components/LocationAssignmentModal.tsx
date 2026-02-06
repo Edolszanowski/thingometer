@@ -79,10 +79,10 @@ export function LocationAssignmentModal({
         // @ts-ignore - Loader.importLibrary exists but TypeScript doesn't recognize it
         const { Marker } = await loader.importLibrary("marker") as google.maps.MarkerLibrary
 
-        // Initialize map centered on Boerne, TX (or current location if available)
+        // Initialize map centered on Greater Boerne Chamber of Commerce (or current location if available)
         const center = locationData.lat && locationData.lng
           ? { lat: locationData.lat, lng: locationData.lng }
-          : { lat: 29.7949, lng: -98.7319 } // Boerne, TX default
+          : { lat: 29.793703424098197, lng: -98.7315085493606 } // Greater Boerne Chamber of Commerce
 
         const map = new Map(mapRef.current!, {
           center,
