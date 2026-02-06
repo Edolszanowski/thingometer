@@ -116,9 +116,11 @@ export default function CoordinatorLocationsPage() {
     }
   }
 
-  const handleEventChange = (eventId: number) => {
+  const handleEventChange = (eventId: number | null) => {
     setSelectedEventId(eventId)
-    fetchEntries(eventId)
+    if (eventId !== null) {
+      fetchEntries(eventId)
+    }
   }
 
   const handleAssignLocation = (entry: Entry) => {
