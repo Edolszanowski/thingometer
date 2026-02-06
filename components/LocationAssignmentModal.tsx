@@ -12,10 +12,12 @@ import { MapPin, Navigation } from "lucide-react"
 interface LocationData {
   placeId: string
   address: string
-  lat: number
-  lng: number
-  placeName: string
-  instructions: string
+  lat?: number
+  lng?: number
+  placeName?: string
+  instructions?: string
+  assignedBy?: string
+  assignedAt?: string
 }
 
 interface LocationAssignmentModalProps {
