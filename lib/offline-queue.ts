@@ -374,14 +374,6 @@ class OfflineQueue {
   }
 
   /**
-   * Clear all pending scores (use with caution!)
-   */
-  clearQueue(): void {
-    console.warn('[OfflineQueue] Clearing all pending scores')
-    this.saveQueue([])
-  }
-
-  /**
    * Clear all queued scores (useful for clearing invalid/corrupted data)
    */
   clearQueue(): void {
