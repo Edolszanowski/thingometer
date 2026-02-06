@@ -53,20 +53,8 @@ export default function CoordinatorLocationsPage() {
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
   const [filterMode, setFilterMode] = useState<"all" | "unassigned">("unassigned")
 
-  // #region agent log
-  fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:46',message:'Component mounted',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-  // #endregion
-
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:56',message:'useEffect triggered',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-    // #endregion
-    
     const eventId = getCoordinatorEventId()
-    
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:57',message:'Got coordinator event ID',data:{eventId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     
     if (eventId) {
       setSelectedEventId(eventId)
@@ -77,21 +65,10 @@ export default function CoordinatorLocationsPage() {
   }, [])
 
   const fetchEntries = async (eventId: number) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:66',message:'fetchEntries called',data:{eventId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
-    
     try {
       const password = getAdminPassword()
       
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:68',message:'Got admin password',data:{hasPassword:!!password},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
-      
       if (!password) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:70',message:'No password - redirecting to /admin',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         router.push("/admin")
         return
       }
@@ -101,26 +78,15 @@ export default function CoordinatorLocationsPage() {
       // Fetch event details to check if it's Lemonade Day
       const eventsResponse = await fetch("/api/events")
       
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:77',message:'Events API response',data:{ok:eventsResponse.ok,status:eventsResponse.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      
       if (eventsResponse.ok) {
         const events = await eventsResponse.json()
         const event = events.find((e: any) => e.id === eventId)
-        
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:80',message:'Found event',data:{eventFound:!!event,eventType:event?.type,eventId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         
         if (event) {
           const isLD = event.type === "lemonade_day"
           setIsLemonadeDay(isLD)
           
           if (!isLD) {
-            // #region agent log
-            fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:86',message:'Not Lemonade Day - redirecting to /coordinator/approve',data:{eventType:event.type},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-            // #endregion
             toast.error("Stand locations are only available for Lemonade Day events")
             router.push("/coordinator/approve")
             return
@@ -133,14 +99,7 @@ export default function CoordinatorLocationsPage() {
         `/api/coordinator/floats?password=${encodeURIComponent(password)}&eventId=${eventId}`
       )
 
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:94',message:'Floats API response',data:{ok:response.ok,status:response.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-
       if (response.status === 401) {
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:98',message:'401 Unauthorized - redirecting to /admin',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         router.push("/admin")
         return
       }
@@ -152,10 +111,6 @@ export default function CoordinatorLocationsPage() {
       const data = await response.json()
       // Filter for approved entries only
       const approvedEntries = data.floats?.filter((e: Entry) => e.approved) || []
-      
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'locations/page.tsx:109',message:'Setting entries',data:{entryCount:approvedEntries.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-      // #endregion
       
       setEntries(approvedEntries)
     } catch (error) {

@@ -89,9 +89,6 @@ export function QuickJumpBar({
           existingFloatNumbers.add(float.floatNumber)
         })
         
-        // #region agent log
-        fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:86',message:'Setting floatData state',data:{mapSize:map.size,statuses:Array.from(map.values()).slice(0,5).map(f=>({floatNumber:f.floatNumber,scoreStatus:f.scoreStatus}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-        // #endregion
         setFloatData(map)
       }
     } catch (error) {
@@ -103,15 +100,8 @@ export function QuickJumpBar({
     // Fetch float data on mount
     fetchFloats()
 
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:93',message:'Event listener registered for scoreSaved',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-    // #endregion
-
     // Listen for score saved events to update
     const handleScoreSaved = () => {
-      // #region agent log
-      fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:98',message:'scoreSaved event received',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      // #endregion
       fetchFloats()
     }
 
@@ -133,9 +123,6 @@ export function QuickJumpBar({
 
   // Refresh when pathname changes (navigating between floats)
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:119',message:'Pathname changed - scheduling fetch',data:{pathname,totalFloats},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     // Add small delay to ensure database has committed any pending saves
     // before fetching updated status
     const timer = setTimeout(() => {
