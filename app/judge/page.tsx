@@ -6,15 +6,15 @@ import { createClient } from "@supabase/supabase-js"
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic'
 
-function getCookie(name: string): string | null {
-  const cookieStore = cookies()
+async function getCookie(name: string): Promise<string | null> {
+  const cookieStore = await cookies()
   const c = cookieStore.get(name)
   return c?.value ?? null
 }
 
 export default async function JudgePage() {
-  const judgeAuth = getCookie("judge-auth")
-  const judgeIdRaw = getCookie("parade-judge-id")
+  const judgeAuth = await getCookie("judge-auth")
+  const judgeIdRaw = await getCookie("parade-judge-id")
 
   // If either cookie is missing, redirect to login.
   if (!judgeAuth || !judgeIdRaw) {
