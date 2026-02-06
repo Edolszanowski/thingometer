@@ -16,7 +16,7 @@ export default function CoordinatorPage() {
       router.push("/coordinator/positions")
     } else {
       // Not authenticated, redirect to admin login
-      router.push("/admin/dashboard")
+      router.push("/admin")
     }
   }, [router])
 

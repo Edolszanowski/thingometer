@@ -14,10 +14,15 @@ async function getCookie(name: string): Promise<string | null> {
 
 export default async function JudgePage() {
   const judgeAuth = await getCookie("judge-auth")
-  const judgeIdRaw = await getCookie("parade-judge-id")
+  // Try both cookie names (server-side and client-side)
+  let judgeIdRaw = await getCookie("parade-judge-id")
+  if (!judgeIdRaw) {
+    judgeIdRaw = await getCookie("parade-judge-id-client")
+  }
 
   // If either cookie is missing, redirect to login.
   if (!judgeAuth || !judgeIdRaw) {
+    console.log('[JudgePage] Missing cookies - judgeAuth:', !!judgeAuth, 'judgeId:', !!judgeIdRaw)
     redirect("/judge/login")
   }
   
