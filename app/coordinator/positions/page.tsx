@@ -11,6 +11,9 @@ import { ArrowUp, ArrowDown, Save, RefreshCw, Trash2, Plus, MapPin } from "lucid
 import { EventSelector, getCoordinatorEventId } from "@/components/EventSelector"
 import { ParticipantLookup } from "@/components/ParticipantLookup"
 import { useRealtimeCallback } from "@/hooks/useRealtimeData"
+import { getLabelsForEvent } from "@/app/actions"
+import { getDefaultLabels } from "@/lib/labels"
+import type { UiLabels } from "@/lib/labels"
 
 interface Float {
   id: number
@@ -40,12 +43,18 @@ export default function CoordinatorPositionsPage() {
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [isLemonadeDay, setIsLemonadeDay] = useState(false)
+  const [labels, setLabels] = useState<UiLabels>(getDefaultLabels())
 
   useEffect(() => {
     const eventId = getCoordinatorEventId()
     setSelectedEventId(eventId)
     fetchFloats(eventId)
     fetchSignupLockStatus()
+    
+    // Load labels for initial event
+    if (eventId) {
+      getLabelsForEvent(eventId).then(setLabels).catch(() => setLabels(getDefaultLabels()))
+    }
   }, [])
 
   // 🔴 REALTIME: Subscribe to floats changes for instant updates
@@ -62,9 +71,13 @@ export default function CoordinatorPositionsPage() {
     setSelectedEventId(eventId)
     fetchFloats(eventId)
     
-    // Check if event is Lemonade Day
+    // Load labels for the event
     if (eventId) {
       try {
+        const eventLabels = await getLabelsForEvent(eventId)
+        setLabels(eventLabels)
+        
+        // Check if event is Lemonade Day
         const eventsResponse = await fetch("/api/events")
         if (eventsResponse.ok) {
           const events = await eventsResponse.json()
@@ -72,10 +85,12 @@ export default function CoordinatorPositionsPage() {
           setIsLemonadeDay(event?.type === "lemonade_day")
         }
       } catch (error) {
-        console.error("Error checking event type:", error)
+        console.error("Error loading event data:", error)
+        setLabels(getDefaultLabels())
       }
     } else {
       setIsLemonadeDay(false)
+      setLabels(getDefaultLabels())
     }
   }
 
@@ -407,7 +422,7 @@ export default function CoordinatorPositionsPage() {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: "#DC2626" }}>
-              Float Positions
+              {labels.entries} Positions
             </h1>
             <Link href="/admin/results">
               <Button variant="outline" size="sm" className="text-xs sm:text-sm">
@@ -534,7 +549,7 @@ export default function CoordinatorPositionsPage() {
                     className="text-xl sm:text-2xl font-bold w-12 sm:w-14 text-center shrink-0"
                     style={{ color: "#DC2626" }}
                   >
-                    #{float.floatNumber ?? "—"}
+                    {float.floatNumber ? `#${float.floatNumber}` : "—"}
                   </div>
 
                   {/* Up/Down arrows - compact on mobile */}
