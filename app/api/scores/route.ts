@@ -3,6 +3,7 @@ import { db, schema } from "@/lib/db"
 import { getJudgeId } from "@/lib/cookies"
 import { getEventCategories } from "@/lib/scores"
 import { eq, and, inArray } from "drizzle-orm"
+import { cookies } from "next/headers"
 
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic'
@@ -12,9 +13,15 @@ export const revalidate = 0
 
 export async function POST(request: NextRequest) {
   try {
+    // Debug: log all cookies received
+    const cookieStore = await cookies()
+    const allCookies = cookieStore.getAll()
+    console.log("[API] POST /api/scores - All cookies:", allCookies.map(c => c.name))
+    
     const judgeId = await getJudgeId()
     if (!judgeId) {
       console.error("[API] Judge not authenticated - no judgeId cookie found")
+      console.error("[API] Available cookies:", allCookies.map(c => `${c.name}=${c.value.substring(0, 10)}...`))
       return NextResponse.json({ error: "Judge not authenticated" }, { status: 401 })
     }
 
