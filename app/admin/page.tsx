@@ -32,10 +32,7 @@ export default function AdminPage() {
       .then((data) => {
         if (data.length > 0) {
           setCities(data)
-          // Auto-select first city if only one
-          if (data.length === 1) {
-            setCityId(data[0].id)
-          }
+          // Do NOT auto-select - user must choose their city
         } else {
           // No cities - backward compatibility mode
           setCityId(0) // Use 0 as "no city" indicator

@@ -67,19 +67,6 @@ export default function Home() {
             </Button>
           </Link>
           
-          <Link href="/coordinator" className="block">
-            <Button 
-              variant="outline" 
-              className="w-full h-12 sm:h-14 text-base sm:text-lg"
-              style={{ 
-                borderColor: "var(--theme-secondary, #16A34A)", 
-                color: "var(--theme-secondary, #16A34A)" 
-              }}
-            >
-              Coordinator Portal
-            </Button>
-          </Link>
-          
           <Link href="/admin" className="block">
             <Button 
               variant="outline" 
@@ -89,7 +76,7 @@ export default function Home() {
                 color: "var(--theme-primary, #DC2626)" 
               }}
             >
-              Admin Portal
+              City Admin Portal
             </Button>
           </Link>
         </div>
@@ -98,8 +85,7 @@ export default function Home() {
         <div className="pt-4 border-t border-gray-200">
           <p className="text-xs text-muted-foreground">
             <strong>Judges:</strong> Score entries in real-time • 
-            <strong> Coordinators:</strong> Manage entries & logistics • 
-            <strong> Admins:</strong> View results & manage event
+            <strong> City Admins:</strong> Manage city events & coordinators
           </p>
         </div>
       </div>
