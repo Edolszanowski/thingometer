@@ -111,7 +111,9 @@ export default function JudgeMapPage() {
         libraries: ["places", "marker"],
       })
 
+      // @ts-ignore - Loader.importLibrary exists but TypeScript doesn't recognize it
       const { Map } = await loader.importLibrary("maps") as google.maps.MapsLibrary
+      // @ts-ignore - Loader.importLibrary exists but TypeScript doesn't recognize it
       const { Marker } = await loader.importLibrary("marker") as google.maps.MarkerLibrary
 
       // Calculate center point from all stands
