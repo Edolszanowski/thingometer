@@ -15,6 +15,7 @@ interface Stand {
   firstName: string | null
   lastName: string | null
   organization: string
+  approved: boolean
   metadata?: {
     assignedLocation?: {
       placeId: string
