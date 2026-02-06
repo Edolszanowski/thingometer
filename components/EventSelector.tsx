@@ -44,7 +44,7 @@ export function EventSelector({ onEventChange }: EventSelectorProps) {
       console.log("[EventSelector] Password now available, re-fetching events")
       fetchEvents()
     }
-  }, [])
+  }, [events.length, loading])
 
   const fetchEvents = async () => {
     try {
@@ -108,8 +108,11 @@ export function EventSelector({ onEventChange }: EventSelectorProps) {
         const savedEvent = sortedEvents.find((e: Event) => e.id === savedEventIdNum)
         if (savedEvent) {
           hasValidSavedEvent = true
-          setSelectedEventId(savedEventIdNum)
-          onEventChange?.(savedEventIdNum)
+          // Only update if different from current selection to prevent loops
+          if (selectedEventId !== savedEventIdNum) {
+            setSelectedEventId(savedEventIdNum)
+            onEventChange?.(savedEventIdNum)
+          }
         } else {
           // Saved event not found in list - clear cookie
           Cookies.remove(COORDINATOR_EVENT_ID_COOKIE)
@@ -126,7 +129,7 @@ export function EventSelector({ onEventChange }: EventSelectorProps) {
           return eventDate >= now && e.active
         }) || sortedEvents.find((e: Event) => e.active) || sortedEvents[0]
         
-        if (nextEvent) {
+        if (nextEvent && selectedEventId !== nextEvent.id) {
           setSelectedEventId(nextEvent.id)
           Cookies.set(COORDINATOR_EVENT_ID_COOKIE, String(nextEvent.id), { expires: 7 })
           onEventChange?.(nextEvent.id)

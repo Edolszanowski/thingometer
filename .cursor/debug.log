@@ -22,3 +22,103 @@
 {"location":"QuickJumpBar.tsx:86","message":"Setting floatData state","data":{"mapSize":5,"statuses":[{"floatNumber":101,"scoreStatus":"complete"},{"floatNumber":102,"scoreStatus":"complete"},{"floatNumber":103,"scoreStatus":"complete"},{"floatNumber":104,"scoreStatus":"incomplete"},{"floatNumber":105,"scoreStatus":"complete"}]},"timestamp":1770391491497,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
 {"location":"QuickJumpBar.tsx:45","message":"Floats received from API","data":{"floatCount":5,"statuses":[{"floatNumber":101,"scoreStatus":"complete"},{"floatNumber":102,"scoreStatus":"complete"},{"floatNumber":103,"scoreStatus":"complete"},{"floatNumber":104,"scoreStatus":"incomplete"},{"floatNumber":105,"scoreStatus":"complete"}]},"timestamp":1770391492016,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
 {"location":"QuickJumpBar.tsx:86","message":"Setting floatData state","data":{"mapSize":5,"statuses":[{"floatNumber":101,"scoreStatus":"complete"},{"floatNumber":102,"scoreStatus":"complete"},{"floatNumber":103,"scoreStatus":"complete"},{"floatNumber":104,"scoreStatus":"incomplete"},{"floatNumber":105,"scoreStatus":"complete"}]},"timestamp":1770391492017,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"QuickJumpBar.tsx:35","message":"fetchFloats called","data":{"judgeId":9,"timestamp":1770391739711},"timestamp":1770391739711,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"QuickJumpBar.tsx:45","message":"Floats received from API","data":{"floatCount":5,"statuses":[{"floatNumber":101,"scoreStatus":"complete"},{"floatNumber":102,"scoreStatus":"complete"},{"floatNumber":103,"scoreStatus":"complete"},{"floatNumber":104,"scoreStatus":"incomplete"},{"floatNumber":105,"scoreStatus":"complete"}]},"timestamp":1770391740675,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"QuickJumpBar.tsx:86","message":"Setting floatData state","data":{"mapSize":5,"statuses":[{"floatNumber":101,"scoreStatus":"complete"},{"floatNumber":102,"scoreStatus":"complete"},{"floatNumber":103,"scoreStatus":"complete"},{"floatNumber":104,"scoreStatus":"incomplete"},{"floatNumber":105,"scoreStatus":"complete"}]},"timestamp":1770391740675,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770391884446,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391884444,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770391884446,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391884447,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:56","message":"useEffect triggered","data":{},"timestamp":1770391884446,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:57","message":"Got coordinator event ID","data":{"eventId":4},"timestamp":1770391884446,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770391884646,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391884647,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770391884647,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770391885188,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770391885188,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391885189,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770391885847,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391885848,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770391885847,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770391885965,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770391885965,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391885965,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770391886196,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391886196,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770391886196,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770391886482,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770391886482,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391886483,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770391886605,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391886605,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770391886605,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770391886820,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770391886821,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391886821,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770391887105,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391887105,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770391887105,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770391887202,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770391887203,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391887203,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770391887433,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391887433,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770391887433,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770391887717,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770391887718,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770391887718,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770391887826,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770391887826,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770391888582,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770391888583,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392170245,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:56","message":"useEffect triggered","data":{},"timestamp":1770392170246,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770392170247,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392170248,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:57","message":"Got coordinator event ID","data":{"eventId":4},"timestamp":1770392170246,"sessionId":"debug-session","runId":"run1","hypothesisId":"C"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770392170247,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770392171006,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770392171006,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392171006,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770392171672,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770392171673,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392171673,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770392172475,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770392172475,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392172476,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770392172631,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770392172632,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392172632,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770392172871,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770392172871,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392172871,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770392173174,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770392173174,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392173174,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770392173335,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770392173336,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392173336,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770392173621,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392173621,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770392173621,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770392173909,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392173910,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770392173910,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770392174021,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770392174021,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392174021,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770392174247,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770392174247,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392174247,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770392174535,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770392174536,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392174536,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:77","message":"Events API response","data":{"ok":true,"status":200},"timestamp":1770392174692,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:80","message":"Found event","data":{"eventFound":true,"eventType":"lemonade_day","eventId":4},"timestamp":1770392174692,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392174693,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:94","message":"Floats API response","data":{"ok":true,"status":200},"timestamp":1770392174913,"sessionId":"debug-session","runId":"run1","hypothesisId":"D"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392174913,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:109","message":"Setting entries","data":{"entryCount":0},"timestamp":1770392174913,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:66","message":"fetchEntries called","data":{"eventId":4},"timestamp":1770392175201,"sessionId":"debug-session","runId":"run1","hypothesisId":"B"}
+{"location":"locations/page.tsx:46","message":"Component mounted","data":{},"timestamp":1770392175202,"sessionId":"debug-session","runId":"run1","hypothesisId":"E"}
+{"location":"locations/page.tsx:68","message":"Got admin password","data":{"hasPassword":true},"timestamp":1770392175202,"sessionId":"debug-session","runId":"run1","hypothesisId":"A"}
