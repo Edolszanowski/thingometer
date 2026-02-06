@@ -86,7 +86,7 @@ export default function JudgeMapPage() {
       const scoresResponse = await fetch("/api/scores")
       if (scoresResponse.ok) {
         const scoresData = await scoresResponse.json()
-        const scoredIds = new Set(scoresData.scores?.map((s: any) => s.floatId) || [])
+        const scoredIds = new Set<number>(scoresData.scores?.map((s: any) => s.floatId as number) || [])
         setScoredStands(scoredIds)
       }
     } catch (error) {
