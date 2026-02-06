@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -49,11 +49,24 @@ export default function CoordinatorLocationsPage() {
   const [selectedPosition, setSelectedPosition] = useState<StandPosition | null>(null)
   const [filterMode, setFilterMode] = useState<"all" | "unassigned">("unassigned")
   const [initializing, setInitializing] = useState(false)
+  
+  // Track if initial fetch has been done to prevent duplicate fetches
+  const hasFetchedRef = useRef(false)
+  const lastFetchedEventIdRef = useRef<number | null>(null)
 
   useEffect(() => {
+    // Only run initial fetch once
+    if (hasFetchedRef.current) {
+      console.log("[Locations] Initial useEffect already ran, skipping")
+      return
+    }
+    
     const eventId = getCoordinatorEventId()
+    console.log("[Locations] Initial mount, eventId from cookie:", eventId)
     
     if (eventId) {
+      hasFetchedRef.current = true
+      lastFetchedEventIdRef.current = eventId
       setSelectedEventId(eventId)
       fetchPositions(eventId)
     } else {
@@ -154,8 +167,18 @@ export default function CoordinatorLocationsPage() {
   }
 
   const handleEventChange = (eventId: number | null) => {
+    // Guard: Only update and fetch if the event ID has actually changed from the last fetch
+    // This prevents infinite loops when EventSelector calls onEventChange during initialization
+    if (eventId === lastFetchedEventIdRef.current) {
+      console.log("[Locations] handleEventChange called but eventId unchanged from last fetch, skipping")
+      return
+    }
+    
+    console.log("[Locations] handleEventChange:", eventId, "lastFetched:", lastFetchedEventIdRef.current)
     setSelectedEventId(eventId)
+    
     if (eventId !== null) {
+      lastFetchedEventIdRef.current = eventId
       fetchPositions(eventId)
     }
   }

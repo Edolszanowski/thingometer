@@ -107,13 +107,19 @@ export function EventSelector({ onEventChange }: EventSelectorProps) {
       // Only call onEventChange once during initialization
       if (!hasInitialized.current) {
         hasInitialized.current = true
+        console.log("[EventSelector] Initializing, savedEventIdNum:", savedEventIdNum)
         
         // If there's a saved event in cookie, use it (even if state hasn't updated yet)
         if (savedEventIdNum !== null && !isNaN(savedEventIdNum)) {
           const savedEvent = sortedEvents.find((e: Event) => e.id === savedEventIdNum)
           if (savedEvent) {
             hasValidSavedEvent = true
-            setSelectedEventId(savedEventIdNum)
+            // Only call setSelectedEventId if different from current
+            if (selectedEventId !== savedEventIdNum) {
+              setSelectedEventId(savedEventIdNum)
+            }
+            // Always notify parent on initialization so it knows which event is selected
+            console.log("[EventSelector] Calling onEventChange with saved event:", savedEventIdNum)
             onEventChange?.(savedEventIdNum)
           } else {
             // Saved event not found in list - clear cookie
@@ -132,11 +138,14 @@ export function EventSelector({ onEventChange }: EventSelectorProps) {
           }) || sortedEvents.find((e: Event) => e.active) || sortedEvents[0]
           
           if (nextEvent) {
+            console.log("[EventSelector] Auto-selecting next event:", nextEvent.id)
             setSelectedEventId(nextEvent.id)
             Cookies.set(COORDINATOR_EVENT_ID_COOKIE, String(nextEvent.id), { expires: 7 })
             onEventChange?.(nextEvent.id)
           }
         }
+      } else {
+        console.log("[EventSelector] Already initialized, skipping onEventChange calls")
       }
     } catch (error) {
       console.error("[EventSelector] Error fetching events:", error)
