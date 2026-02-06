@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     type CategoryType = typeof schema.eventCategories.$inferSelect
     const categoryMap = new Map<string, CategoryType>(categories.map((c: CategoryType) => [c.categoryName, c]))
 
-    // Validate all provided scores
+    // Validate and normalize scores
     for (const [categoryName, value] of Object.entries(scoreValues)) {
       if (value === undefined) continue
       
@@ -111,11 +111,10 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
       }
 
-      // If category doesn't have "none" option and value is 0, reject
+      // If category doesn't have "none" option and value is 0, convert to null for backwards compatibility
       if (!category.hasNoneOption && value === 0) {
-        return NextResponse.json({ 
-          error: `Category ${categoryName} does not allow "None" option` 
-        }, { status: 400 })
+        console.log(`[API] Converting score 0 to null for category ${categoryName} (no none option)`)
+        scoreValues[categoryName] = null
       }
     }
 

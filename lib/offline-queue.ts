@@ -39,6 +39,9 @@ class OfflineQueue {
     // Only run in browser environment
     if (typeof window === 'undefined') return
 
+    // Clean any invalid scores from previous sessions
+    this.cleanInvalidScores()
+
     // Listen to browser online/offline events
     window.addEventListener('online', this.handleOnlineEvent)
     window.addEventListener('offline', this.handleOfflineEvent)
@@ -376,6 +379,49 @@ class OfflineQueue {
   clearQueue(): void {
     console.warn('[OfflineQueue] Clearing all pending scores')
     this.saveQueue([])
+  }
+
+  /**
+   * Clear all queued scores (useful for clearing invalid/corrupted data)
+   */
+  clearQueue(): void {
+    if (typeof window === 'undefined') return
+    
+    try {
+      localStorage.removeItem(this.STORAGE_KEY)
+      console.log('[OfflineQueue] Queue cleared')
+      this.notifyListeners()
+    } catch (error) {
+      console.error('[OfflineQueue] Failed to clear queue:', error)
+    }
+  }
+
+  /**
+   * Remove invalid scores from queue (scores with 0 values for categories that don't allow None)
+   */
+  cleanInvalidScores(): void {
+    if (typeof window === 'undefined') return
+    
+    try {
+      const queue = this.loadQueue()
+      const validQueue = queue.filter(item => {
+        // Check if any score value is 0 (which might be invalid)
+        const hasZeroScores = Object.values(item.scores).some(v => v === 0)
+        if (hasZeroScores) {
+          console.log(`[OfflineQueue] Removing invalid score for float ${item.floatId} (contains 0 values)`)
+          return false
+        }
+        return true
+      })
+      
+      if (validQueue.length !== queue.length) {
+        this.saveQueue(validQueue)
+        console.log(`[OfflineQueue] Cleaned ${queue.length - validQueue.length} invalid scores`)
+        this.notifyListeners()
+      }
+    } catch (error) {
+      console.error('[OfflineQueue] Failed to clean invalid scores:', error)
+    }
   }
 
   /**
