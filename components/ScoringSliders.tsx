@@ -62,6 +62,9 @@ export function ScoringSliders({
   const [lastSavedFloatId, setLastSavedFloatId] = useState<number | null>(null)
   const [isLemonadeDay, setIsLemonadeDay] = useState(isLemonadeDayProp ?? false)
   
+  // Debug: log isLemonadeDay state
+  console.log('[ScoringSliders] isLemonadeDay state:', isLemonadeDay, 'prop:', isLemonadeDayProp, 'showOverlay:', showSavingOverlay)
+  
   // Refs to track state for save-on-unmount
   const pendingTimerRef = useRef<NodeJS.Timeout | null>(null)
   const latestValuesRef = useRef<Record<string, number | null>>(initializeScores())
@@ -407,6 +410,8 @@ export function ScoringSliders({
       {showSavingOverlay && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md">
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] p-10 flex flex-col items-center gap-5 border border-gray-200">
+            {/* Debug log when overlay renders */}
+            {console.log('[ScoringSliders] Rendering overlay, isLemonadeDay:', isLemonadeDay)}
             {isLemonadeDay ? (
               /* Lemonade Day: Creative lemon pitcher animation */
               <>

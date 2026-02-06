@@ -52,6 +52,9 @@ export default async function FloatPage({
   const floatData = float[0]
   const eventId = floatData.eventId
   const labels = await loadLabelsForEventId(eventId)
+  
+  // Debug: log labels to verify event type detection
+  console.log('[FloatPage] eventId:', eventId, 'labels.entry:', labels.entry, 'isLemonadeDay:', labels.entry === "Stand")
 
   if (!eventId) {
     redirect("/floats")
