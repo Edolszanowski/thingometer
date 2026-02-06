@@ -57,6 +57,35 @@ export default async function FloatPage({
     redirect("/floats")
   }
 
+  // Fetch stand location from stand_positions table (if available)
+  let standLocation = null
+  if (floatData.floatNumber && floatData.eventId) {
+    try {
+      const positions = await db
+        .select()
+        .from(schema.standPositions)
+        .where(
+          and(
+            eq(schema.standPositions.eventId, floatData.eventId),
+            eq(schema.standPositions.positionNumber, floatData.floatNumber)
+          )
+        )
+        .limit(1)
+      
+      if (positions.length > 0 && positions[0].locationData) {
+        standLocation = positions[0].locationData
+      }
+    } catch (error) {
+      // standPositions table might not exist yet, fallback to metadata
+      console.log("Could not fetch from stand_positions, using metadata fallback")
+    }
+  }
+
+  // Fallback to old metadata location if no stand position location found
+  if (!standLocation && (floatData.metadata as any)?.assignedLocation) {
+    standLocation = (floatData.metadata as any).assignedLocation
+  }
+
   // Lemonade Day scoring scale support (event-configurable via event_types.rules.scoringScale).
   // Default is parade behavior: 0–20.
   let scoringScale: { min: number; max: number } = { min: 0, max: 20 }
@@ -206,7 +235,7 @@ export default async function FloatPage({
         </div>
 
         {/* LEMONADE DAY: Show assigned stand location (SAFETY: NO lat/lng displayed) */}
-        {floatData.metadata?.assignedLocation && (
+        {standLocation && (
           <Card className="mb-6 p-4 bg-blue-50 border-blue-200">
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -214,38 +243,34 @@ export default async function FloatPage({
                   <MapPin className="h-5 w-5" />
                   Stand Location
                 </h3>
-                {floatData.metadata.assignedLocation.placeName && (
+                {standLocation.placeName && (
                   <p className="text-sm mt-2 font-medium text-blue-900">
-                    {floatData.metadata.assignedLocation.placeName}
+                    {standLocation.placeName}
                   </p>
                 )}
                 <p className="text-sm text-blue-800 mt-1">
-                  {floatData.metadata.assignedLocation.address}
+                  {standLocation.address}
                 </p>
-                {floatData.metadata.assignedLocation.instructions && (
+                {standLocation.instructions && (
                   <p className="text-sm text-blue-700 mt-2 p-2 bg-blue-100 rounded italic">
-                    <strong>Instructions:</strong> {floatData.metadata.assignedLocation.instructions}
+                    <strong>Instructions:</strong> {standLocation.instructions}
                   </p>
                 )}
               </div>
-              <Button
-                onClick={() => {
-                  // CRITICAL SAFETY: Use Place ID for directions, NOT coordinates
-                  const placeId = (floatData.metadata as any)?.assignedLocation?.placeId
-                  if (placeId) {
-                    window.open(
-                      `https://www.google.com/maps/dir/?api=1&destination=place_id:${placeId}`,
-                      "_blank"
-                    )
-                  }
-                }}
-                variant="outline"
-                size="sm"
-                className="ml-4"
+              <Link
+                href={`https://www.google.com/maps/dir/?api=1&destination=place_id:${standLocation.placeId}`}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <Navigation className="h-4 w-4 mr-1" />
-                Navigate
-              </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-4"
+                >
+                  <Navigation className="h-4 w-4 mr-1" />
+                  Navigate
+                </Button>
+              </Link>
             </div>
           </Card>
         )}

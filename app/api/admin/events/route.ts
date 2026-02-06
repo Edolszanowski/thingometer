@@ -155,6 +155,27 @@ export async function POST(request: NextRequest) {
         await db.insert(schema.judges).values(judgeInserts)
       }
 
+      // Initialize stand positions for Lemonade Day events
+      if (type === "lemonade_day") {
+        console.log(`[api/admin/events] Initializing 50 stand positions for Lemonade Day event ${eventId}`)
+        const positions = []
+        for (let i = 1; i <= 50; i++) {
+          positions.push({
+            eventId,
+            positionNumber: i,
+            locationData: null,
+          })
+        }
+        
+        try {
+          await db.insert(schema.standPositions).values(positions)
+          console.log(`[api/admin/events] Successfully initialized 50 stand positions`)
+        } catch (posError: any) {
+          // Log error but don't fail event creation
+          console.error(`[api/admin/events] Error initializing stand positions:`, posError)
+        }
+      }
+
       // Fetch complete event with categories and judges
       const event = await db
         .select()

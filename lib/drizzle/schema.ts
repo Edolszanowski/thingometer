@@ -80,6 +80,35 @@ export const eventCategories = pgTable(
 )
 
 // ============================================================================
+// STAND_POSITIONS - Position-based location management for Lemonade Day
+// ============================================================================
+export const standPositions = pgTable(
+  "stand_positions",
+  {
+    id: serial("id").primaryKey(),
+    eventId: integer("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    positionNumber: integer("position_number").notNull(), // Stand number (1-50)
+    locationData: jsonb("location_data").$type<{
+      placeId: string        // Google Place ID (primary source of truth)
+      address: string        // Formatted address
+      lat: number           // Latitude (cache only)
+      lng: number           // Longitude (cache only)
+      placeName?: string    // Optional friendly name
+      instructions?: string // Optional notes (e.g., "near fountain")
+      assignedBy: string    // Coordinator ID
+      assignedAt: string    // ISO timestamp
+    }>(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    uniqueEventPosition: unique().on(table.eventId, table.positionNumber),
+  })
+)
+
+// ============================================================================
 // JUDGES - Judge table with eventId (can be nullable for migration)
 // ============================================================================
 export const judges = pgTable(

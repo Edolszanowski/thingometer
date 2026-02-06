@@ -23,9 +23,9 @@ interface LocationData {
 interface LocationAssignmentModalProps {
   isOpen: boolean
   onClose: () => void
-  entryId: number
-  entryName: string
-  participantName: string
+  positionId: number
+  positionNumber: number
+  participantName?: string
   currentLocation?: LocationData
   onSuccess: () => void
 }
@@ -33,8 +33,8 @@ interface LocationAssignmentModalProps {
 export function LocationAssignmentModal({
   isOpen,
   onClose,
-  entryId,
-  entryName,
+  positionId,
+  positionNumber,
   participantName,
   currentLocation,
   onSuccess,
@@ -237,7 +237,7 @@ export function LocationAssignmentModal({
     setLoading(true)
 
     try {
-      const response = await fetch(`/api/coordinator/locations/${entryId}`, {
+      const response = await fetch(`/api/coordinator/stand-positions/${positionId}/location`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -279,7 +279,7 @@ export function LocationAssignmentModal({
             Assign Stand Location
           </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            {entryName} - {participantName}
+            Stand #{positionNumber}{participantName && ` - ${participantName}`}
           </p>
         </DialogHeader>
 

@@ -5,34 +5,30 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
-import { MapPin, Navigation, CheckCircle, AlertCircle } from "lucide-react"
+import { MapPin, Navigation, CheckCircle, AlertCircle, User } from "lucide-react"
 import { EventSelector, getCoordinatorEventId } from "@/components/EventSelector"
 import { LocationAssignmentModal } from "@/components/LocationAssignmentModal"
 
-interface Entry {
+interface LocationData {
+  placeId: string
+  address: string
+  lat: number
+  lng: number
+  placeName?: string
+  instructions?: string
+  assignedBy: string
+  assignedAt: string
+}
+
+interface StandPosition {
   id: number
-  floatNumber: number | null
-  entryName: string | null
-  firstName: string | null
-  lastName: string | null
-  organization: string
-  approved: boolean
-  metadata?: {
-    assignedLocation?: {
-      placeId: string
-      address: string
-      lat?: number
-      lng?: number
-      placeName?: string
-      instructions?: string
-      assignedBy: string
-      assignedAt: string
-    }
-    child?: {
-      firstName: string
-      lastName: string
-    }
-    [key: string]: unknown
+  positionNumber: number
+  locationData?: LocationData
+  assignedParticipant?: {
+    id: number
+    entryName: string
+    participantName: string
+    approved: boolean
   }
 }
 
@@ -45,26 +41,27 @@ function getAdminPassword(): string | null {
 
 export default function CoordinatorLocationsPage() {
   const router = useRouter()
-  const [entries, setEntries] = useState<Entry[]>([])
+  const [positions, setPositions] = useState<StandPosition[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
   const [isLemonadeDay, setIsLemonadeDay] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
-  const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
+  const [selectedPosition, setSelectedPosition] = useState<StandPosition | null>(null)
   const [filterMode, setFilterMode] = useState<"all" | "unassigned">("unassigned")
+  const [initializing, setInitializing] = useState(false)
 
   useEffect(() => {
     const eventId = getCoordinatorEventId()
     
     if (eventId) {
       setSelectedEventId(eventId)
-      fetchEntries(eventId)
+      fetchPositions(eventId)
     } else {
       setLoading(false)
     }
   }, [])
 
-  const fetchEntries = async (eventId: number) => {
+  const fetchPositions = async (eventId: number) => {
     try {
       const password = getAdminPassword()
       
@@ -94,54 +91,89 @@ export default function CoordinatorLocationsPage() {
         }
       }
 
-      // Fetch approved entries for this event
+      // Fetch stand positions for this event
       const response = await fetch(
-        `/api/coordinator/floats?password=${encodeURIComponent(password)}&eventId=${eventId}`
+        `/api/coordinator/stand-positions?eventId=${eventId}`
       )
 
-      if (response.status === 401) {
+      if (response.status === 401 || response.status === 403) {
         router.push("/admin")
         return
       }
 
       if (!response.ok) {
-        throw new Error("Failed to fetch entries")
+        // If positions don't exist yet, offer to initialize them
+        if (response.status === 404) {
+          setPositions([])
+          setLoading(false)
+          return
+        }
+        throw new Error("Failed to fetch stand positions")
       }
 
       const data = await response.json()
-      // Filter for approved entries only
-      const approvedEntries = data.floats?.filter((e: Entry) => e.approved) || []
-      
-      setEntries(approvedEntries)
+      setPositions(data.positions || [])
     } catch (error) {
-      console.error("Error fetching entries:", error)
-      toast.error("Failed to load entries")
+      console.error("Error fetching positions:", error)
+      toast.error("Failed to load stand positions")
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleInitializePositions = async () => {
+    if (!selectedEventId) return
+    
+    setInitializing(true)
+    try {
+      const response = await fetch("/api/coordinator/stand-positions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: selectedEventId,
+          count: 50,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Failed to initialize positions" }))
+        toast.error(error.error || "Failed to initialize positions")
+        return
+      }
+
+      toast.success("Stand positions initialized successfully!")
+      fetchPositions(selectedEventId)
+    } catch (error) {
+      console.error("Error initializing positions:", error)
+      toast.error("An error occurred. Please try again.")
+    } finally {
+      setInitializing(false)
     }
   }
 
   const handleEventChange = (eventId: number | null) => {
     setSelectedEventId(eventId)
     if (eventId !== null) {
-      fetchEntries(eventId)
+      fetchPositions(eventId)
     }
   }
 
-  const handleAssignLocation = (entry: Entry) => {
-    setSelectedEntry(entry)
+  const handleAssignLocation = (position: StandPosition) => {
+    setSelectedPosition(position)
     setModalOpen(true)
   }
 
   const handleModalClose = () => {
     setModalOpen(false)
-    setSelectedEntry(null)
+    setSelectedPosition(null)
   }
 
   const handleSuccess = () => {
-    // Refresh entries list
+    // Refresh positions list
     if (selectedEventId) {
-      fetchEntries(selectedEventId)
+      fetchPositions(selectedEventId)
     }
   }
 
@@ -151,16 +183,17 @@ export default function CoordinatorLocationsPage() {
     window.open(url, "_blank")
   }
 
-  // Filter entries based on filter mode
-  const filteredEntries = entries.filter((entry) => {
+  // Filter positions based on filter mode
+  const filteredPositions = positions.filter((position) => {
     if (filterMode === "unassigned") {
-      return !entry.metadata?.assignedLocation
+      return !position.locationData
     }
     return true
   })
 
-  const assignedCount = entries.filter((e) => e.metadata?.assignedLocation).length
-  const unassignedCount = entries.length - assignedCount
+  const assignedCount = positions.filter((p) => p.locationData).length
+  const unassignedCount = positions.length - assignedCount
+  const participantCount = positions.filter((p) => p.assignedParticipant).length
 
   if (loading) {
     return (
@@ -184,7 +217,7 @@ export default function CoordinatorLocationsPage() {
                 Stand Locations
               </h1>
               <p className="text-muted-foreground mt-1">
-                Assign GPS locations to approved Lemonade Day stands
+                Assign GPS locations to stand positions for Lemonade Day
               </p>
             </div>
             <Button variant="outline" onClick={() => router.push("/coordinator")}>
@@ -210,13 +243,27 @@ export default function CoordinatorLocationsPage() {
               Stand location assignment is only available for Lemonade Day events.
             </p>
           </Card>
+        ) : positions.length === 0 ? (
+          <Card className="p-8 text-center">
+            <AlertCircle className="h-12 w-12 mx-auto mb-4 text-blue-500" />
+            <p className="text-lg font-medium mb-2">Stand Positions Not Initialized</p>
+            <p className="text-muted-foreground mb-4">
+              This event needs stand positions to be created before you can assign locations.
+            </p>
+            <Button 
+              onClick={handleInitializePositions}
+              disabled={initializing}
+            >
+              {initializing ? "Initializing..." : "Initialize 50 Stand Positions"}
+            </Button>
+          </Card>
         ) : (
           <>
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <Card className="p-4">
-                <p className="text-sm text-muted-foreground">Total Approved Stands</p>
-                <p className="text-2xl font-bold">{entries.length}</p>
+                <p className="text-sm text-muted-foreground">Total Stand Positions</p>
+                <p className="text-2xl font-bold">{positions.length}</p>
               </Card>
               <Card className="p-4 bg-green-50 border-green-200">
                 <p className="text-sm text-green-700">Locations Assigned</p>
@@ -225,6 +272,10 @@ export default function CoordinatorLocationsPage() {
               <Card className="p-4 bg-amber-50 border-amber-200">
                 <p className="text-sm text-amber-700">Needs Location</p>
                 <p className="text-2xl font-bold text-amber-800">{unassignedCount}</p>
+              </Card>
+              <Card className="p-4 bg-blue-50 border-blue-200">
+                <p className="text-sm text-blue-700">Participants Assigned</p>
+                <p className="text-2xl font-bold text-blue-800">{participantCount}</p>
               </Card>
             </div>
 
@@ -242,41 +293,47 @@ export default function CoordinatorLocationsPage() {
                 onClick={() => setFilterMode("all")}
                 size="sm"
               >
-                All Stands ({entries.length})
+                All Positions ({positions.length})
               </Button>
             </div>
 
-            {/* Entries List */}
-            {filteredEntries.length === 0 ? (
+            {/* Positions List */}
+            {filteredPositions.length === 0 ? (
               <Card className="p-8 text-center">
                 <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
                 <p className="text-lg font-medium mb-2">
                   {filterMode === "unassigned"
-                    ? "All stands have locations assigned!"
-                    : "No approved stands found"}
+                    ? "All positions have locations assigned!"
+                    : "No positions found"}
                 </p>
                 <p className="text-muted-foreground">
                   {filterMode === "unassigned"
-                    ? "Great work! All approved stands have been assigned locations."
-                    : "Approved stands will appear here once participants register and are approved."}
+                    ? "Great work! All stand positions have been assigned locations."
+                    : "Stand positions will appear here once initialized."}
                 </p>
               </Card>
             ) : (
               <div className="space-y-3">
-                {filteredEntries.map((entry) => {
-                  const hasLocation = !!entry.metadata?.assignedLocation
-                  const childName = entry.metadata?.child
-                    ? `${entry.metadata.child.firstName} ${entry.metadata.child.lastName}`
-                    : `${entry.firstName || ""} ${entry.lastName || ""}`.trim() || "Unknown"
+                {filteredPositions.map((position) => {
+                  const hasLocation = !!position.locationData
+                  const hasParticipant = !!position.assignedParticipant
+                  
+                  // Determine card color
+                  let cardClass = "p-4 "
+                  if (hasLocation && hasParticipant) {
+                    cardClass += "bg-green-50 border-green-200" // Green: Location + Participant
+                  } else if (hasLocation && !hasParticipant) {
+                    cardClass += "bg-blue-50 border-blue-200" // Blue: Location only
+                  } else if (!hasLocation && hasParticipant) {
+                    cardClass += "bg-amber-50 border-amber-200" // Amber: Participant only
+                  } else {
+                    cardClass += "bg-gray-50 border-gray-200" // Gray: Empty
+                  }
 
                   return (
                     <Card
-                      key={entry.id}
-                      className={`p-4 ${
-                        hasLocation
-                          ? "bg-green-50 border-green-200"
-                          : "bg-amber-50 border-amber-200"
-                      }`}
+                      key={position.id}
+                      className={cardClass}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -284,38 +341,48 @@ export default function CoordinatorLocationsPage() {
                             {hasLocation ? (
                               <CheckCircle className="h-5 w-5 text-green-600" />
                             ) : (
-                              <AlertCircle className="h-5 w-5 text-amber-600" />
+                              <AlertCircle className="h-5 w-5 text-gray-400" />
                             )}
                             <h3 className="font-semibold text-lg">
-                              {entry.floatNumber ? `Stand #${entry.floatNumber}` : "Pending #"}
-                              {entry.entryName && ` - ${entry.entryName}`}
+                              Stand #{position.positionNumber}
                             </h3>
+                            {hasParticipant && (
+                              <span className="flex items-center gap-1 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                <User className="h-3 w-3" />
+                                Participant Assigned
+                              </span>
+                            )}
                           </div>
-                          <p className="text-sm text-muted-foreground ml-8">
-                            Participant: {childName}
-                          </p>
-                          {hasLocation && entry.metadata?.assignedLocation && (
+                          
+                          {hasParticipant && position.assignedParticipant && (
+                            <p className="text-sm text-muted-foreground ml-8">
+                              Participant: {position.assignedParticipant.participantName}
+                              {position.assignedParticipant.entryName && ` - ${position.assignedParticipant.entryName}`}
+                            </p>
+                          )}
+                          
+                          {hasLocation && position.locationData && (
                             <div className="ml-8 mt-2 text-sm">
                               <p className="font-medium">
-                                {entry.metadata.assignedLocation.placeName || "Location Assigned"}
+                                {position.locationData.placeName || "Location Assigned"}
                               </p>
                               <p className="text-muted-foreground">
-                                {entry.metadata.assignedLocation.address}
+                                {position.locationData.address}
                               </p>
-                              {entry.metadata.assignedLocation.instructions && (
+                              {position.locationData.instructions && (
                                 <p className="text-xs italic text-gray-600 mt-1">
-                                  Note: {entry.metadata.assignedLocation.instructions}
+                                  Note: {position.locationData.instructions}
                                 </p>
                               )}
                             </div>
                           )}
                         </div>
                         <div className="flex gap-2">
-                          {hasLocation && entry.metadata?.assignedLocation && (
+                          {hasLocation && position.locationData && (
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => openDirections(entry.metadata!.assignedLocation!.placeId)}
+                              onClick={() => openDirections(position.locationData!.placeId)}
                             >
                               <Navigation className="h-4 w-4" />
                             </Button>
@@ -323,7 +390,7 @@ export default function CoordinatorLocationsPage() {
                           <Button
                             variant={hasLocation ? "outline" : "default"}
                             size="sm"
-                            onClick={() => handleAssignLocation(entry)}
+                            onClick={() => handleAssignLocation(position)}
                           >
                             <MapPin className="h-4 w-4 mr-1" />
                             {hasLocation ? "Edit" : "Assign"}
@@ -340,18 +407,14 @@ export default function CoordinatorLocationsPage() {
       </div>
 
       {/* Location Assignment Modal */}
-      {selectedEntry && (
+      {selectedPosition && (
         <LocationAssignmentModal
           isOpen={modalOpen}
           onClose={handleModalClose}
-          entryId={selectedEntry.id}
-          entryName={selectedEntry.entryName || "Lemonade Stand"}
-          participantName={
-            selectedEntry.metadata?.child
-              ? `${selectedEntry.metadata.child.firstName} ${selectedEntry.metadata.child.lastName}`
-              : `${selectedEntry.firstName || ""} ${selectedEntry.lastName || ""}`.trim() || "Unknown"
-          }
-          currentLocation={selectedEntry.metadata?.assignedLocation}
+          positionId={selectedPosition.id}
+          positionNumber={selectedPosition.positionNumber}
+          participantName={selectedPosition.assignedParticipant?.participantName}
+          currentLocation={selectedPosition.locationData}
           onSuccess={handleSuccess}
         />
       )}
