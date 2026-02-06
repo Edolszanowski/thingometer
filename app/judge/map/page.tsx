@@ -110,7 +110,7 @@ export default function JudgeMapPage() {
         version: "weekly",
       })
 
-      const google = await loader.load()
+      await loader.loadScript()
       
       const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary
       const { AdvancedMarkerElement: Marker } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary
