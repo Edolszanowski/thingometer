@@ -61,7 +61,7 @@ export function LocationAssignmentModal({
 
     const initMap = async () => {
       try {
-        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS
         if (!apiKey || apiKey === "YOUR_GOOGLE_MAPS_API_KEY_HERE") {
           toast.error("Google Maps API key not configured")
           return
