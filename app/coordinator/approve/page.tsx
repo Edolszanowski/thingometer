@@ -285,13 +285,13 @@ export default function CoordinatorApprovePage() {
   return (
     <div className="min-h-screen p-4">
       <div className="container mx-auto max-w-6xl">
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 space-y-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2" style={{ color: "#DC2626" }}>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: "#DC2626" }}>
               Approve Parade Entries
             </h1>
-            <div className="flex items-center gap-3">
-              <p className="text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Review and approve entries submitted by participants
               </p>
               {lastUpdate && (
@@ -309,19 +309,24 @@ export default function CoordinatorApprovePage() {
               onClick={() => fetchEntries(selectedEventId)}
               variant="outline"
               className="flex items-center gap-2"
+              size="sm"
             >
               <RefreshCw className="h-4 w-4" />
-              Refresh
+              <span className="hidden sm:inline">Refresh</span>
             </Button>
             <Button
               onClick={() => router.push("/coordinator/positions")}
               variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex"
             >
               Manage Positions
             </Button>
             <Button
               onClick={() => router.push("/coordinator/upload")}
               variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex"
             >
               Upload CSV
             </Button>
@@ -336,20 +341,44 @@ export default function CoordinatorApprovePage() {
           <div className="space-y-4">
             {entries.map((entry) => (
               <Card key={entry.id} className="p-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-semibold">{entry.organization}</h3>
-                      {entry.entryName && (
-                        <span className="text-sm text-muted-foreground italic">
-                          - {entry.entryName}
-                        </span>
-                      )}
-                      <StatusBadge status={entry.metadata?.status} />
+                <div className="flex flex-col gap-4">
+                  {/* Header Section */}
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                        <h3 className="text-xl font-semibold">{entry.organization}</h3>
+                        {entry.entryName && (
+                          <span className="text-sm text-muted-foreground italic">
+                            - {entry.entryName}
+                          </span>
+                        )}
+                        <StatusBadge status={entry.metadata?.status} />
+                      </div>
+                      {!viewing || viewing !== entry.id ? (
+                        <div className="text-sm text-muted-foreground">
+                          {entry.typeOfEntry || "No type specified"} • {entry.hasMusic ? "Has Music" : "No Music"}
+                        </div>
+                      ) : null}
                     </div>
 
-                    {viewing === entry.id ? (
-                      <div className="space-y-2 text-sm">
+                    {/* View Details Button - Always visible */}
+                    {viewing !== entry.id && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setViewing(entry.id)}
+                        className="w-full sm:w-auto"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View Details
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Details Section - Shown when viewing */}
+                  {viewing === entry.id && (
+                    <>
+                      <div className="space-y-2 text-sm border-t pt-4">
                         <div><strong>Contact:</strong> {entry.firstName || ""} {entry.lastName || ""} {entry.title ? `(${entry.title})` : ""}</div>
                         <div><strong>Phone:</strong> {entry.phone || "N/A"}</div>
                         <div><strong>Email:</strong> {entry.email || "N/A"}</div>
@@ -374,17 +403,10 @@ export default function CoordinatorApprovePage() {
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <div className="text-sm text-muted-foreground">
-                        {entry.typeOfEntry || "No type specified"} • {entry.hasMusic ? "Has Music" : "No Music"}
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="flex items-center gap-2">
-                    {viewing === entry.id ? (
-                      <>
-                        <div className="flex flex-col gap-2">
+                      {/* Action Controls - Full width on mobile */}
+                      <div className="flex flex-col sm:flex-row gap-3 border-t pt-4">
+                        <div className="flex-1 space-y-3">
                           <Input
                             type="number"
                             placeholder={`${labels.entryNumber} (optional)`}
@@ -392,14 +414,14 @@ export default function CoordinatorApprovePage() {
                             onChange={(e) =>
                               setFloatNumberInput({ ...floatNumberInput, [entry.id]: e.target.value })
                             }
-                            className="w-32"
+                            className="w-full"
                             min="1"
                           />
                           <select 
                             value={entry.metadata?.status || "registered"}
                             onChange={(e) => handleStatusUpdate(entry.id, e.target.value)}
                             disabled={processing === entry.id}
-                            className="text-sm border rounded px-2 py-1 w-32"
+                            className="text-sm border rounded px-3 py-2 w-full"
                           >
                             <option value="pending-consent">Pending Consent</option>
                             <option value="registered">Registered</option>
@@ -407,46 +429,40 @@ export default function CoordinatorApprovePage() {
                             <option value="judged">Judged</option>
                             <option value="completed">Completed</option>
                           </select>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() => handleApprove(entry.id)}
-                              disabled={processing === entry.id}
-                              className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white"
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() => handleReject(entry.id)}
-                              disabled={processing === entry.id}
-                            >
-                              <X className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => setViewing(null)}
-                        >
-                          Hide
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setViewing(entry.id)}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View Details
-                      </Button>
-                    )}
-                  </div>
+                        
+                        <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(entry.id)}
+                            disabled={processing === entry.id}
+                            className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white w-full sm:w-auto"
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleReject(entry.id)}
+                            disabled={processing === entry.id}
+                            className="w-full sm:w-auto"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setViewing(null)}
+                            className="w-full sm:w-auto"
+                          >
+                            Hide
+                          </Button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </Card>
             ))}
