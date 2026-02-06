@@ -422,7 +422,7 @@ export default function CoordinatorPositionsPage() {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold" style={{ color: "#DC2626" }}>
-              {labels.entries} Positions
+              {labels.entryPlural} Positions
             </h1>
             <Link href="/admin/results">
               <Button variant="outline" size="sm" className="text-xs sm:text-sm">
