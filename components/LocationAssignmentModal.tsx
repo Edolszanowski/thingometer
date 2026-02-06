@@ -74,7 +74,9 @@ export function LocationAssignmentModal({
         })
 
         // Load Maps library
+        // @ts-ignore - Loader.importLibrary exists but TypeScript doesn't recognize it
         const { Map } = await loader.importLibrary("maps") as google.maps.MapsLibrary
+        // @ts-ignore - Loader.importLibrary exists but TypeScript doesn't recognize it
         const { Marker } = await loader.importLibrary("marker") as google.maps.MarkerLibrary
 
         // Initialize map centered on Boerne, TX (or current location if available)
@@ -124,6 +126,7 @@ export function LocationAssignmentModal({
 
         // Initialize autocomplete
         if (searchInputRef.current) {
+          // @ts-ignore - Loader.importLibrary exists but TypeScript doesn't recognize it
           const { Autocomplete } = await loader.importLibrary("places") as google.maps.PlacesLibrary
           const autocomplete = new Autocomplete(searchInputRef.current, {
             types: ["address"],
