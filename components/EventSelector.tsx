@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import Cookies from "js-cookie"
@@ -23,6 +23,7 @@ export function EventSelector({ onEventChange }: EventSelectorProps) {
   const [events, setEvents] = useState<Event[]>([])
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+  const hasInitialized = useRef(false)
 
   useEffect(() => {
     // Load saved event ID from cookie FIRST, before fetching events
@@ -103,36 +104,38 @@ export function EventSelector({ onEventChange }: EventSelectorProps) {
       const savedEventIdNum = savedEventId ? parseInt(savedEventId, 10) : null
       let hasValidSavedEvent = false
 
-      // If there's a saved event in cookie, use it (even if state hasn't updated yet)
-      if (savedEventIdNum !== null && !isNaN(savedEventIdNum)) {
-        const savedEvent = sortedEvents.find((e: Event) => e.id === savedEventIdNum)
-        if (savedEvent) {
-          hasValidSavedEvent = true
-          // Only update if different from current selection to prevent loops
-          if (selectedEventId !== savedEventIdNum) {
+      // Only call onEventChange once during initialization
+      if (!hasInitialized.current) {
+        hasInitialized.current = true
+        
+        // If there's a saved event in cookie, use it (even if state hasn't updated yet)
+        if (savedEventIdNum !== null && !isNaN(savedEventIdNum)) {
+          const savedEvent = sortedEvents.find((e: Event) => e.id === savedEventIdNum)
+          if (savedEvent) {
+            hasValidSavedEvent = true
             setSelectedEventId(savedEventIdNum)
             onEventChange?.(savedEventIdNum)
+          } else {
+            // Saved event not found in list - clear cookie
+            Cookies.remove(COORDINATOR_EVENT_ID_COOKIE)
           }
-        } else {
-          // Saved event not found in list - clear cookie
-          Cookies.remove(COORDINATOR_EVENT_ID_COOKIE)
         }
-      }
 
-      // Only auto-select if there's NO valid saved event in cookie AND no event is currently selected
-      if (!hasValidSavedEvent && !selectedEventId && sortedEvents.length > 0) {
-        // Find the "next" event (earliest future event, or earliest active event if no future dates)
-        const now = new Date()
-        const nextEvent = sortedEvents.find((e: Event) => {
-          if (!e.eventDate) return e.active // If no date, prefer active events
-          const eventDate = new Date(e.eventDate)
-          return eventDate >= now && e.active
-        }) || sortedEvents.find((e: Event) => e.active) || sortedEvents[0]
-        
-        if (nextEvent && selectedEventId !== nextEvent.id) {
-          setSelectedEventId(nextEvent.id)
-          Cookies.set(COORDINATOR_EVENT_ID_COOKIE, String(nextEvent.id), { expires: 7 })
-          onEventChange?.(nextEvent.id)
+        // Only auto-select if there's NO valid saved event in cookie AND no event is currently selected
+        if (!hasValidSavedEvent && !selectedEventId && sortedEvents.length > 0) {
+          // Find the "next" event (earliest future event, or earliest active event if no future dates)
+          const now = new Date()
+          const nextEvent = sortedEvents.find((e: Event) => {
+            if (!e.eventDate) return e.active // If no date, prefer active events
+            const eventDate = new Date(e.eventDate)
+            return eventDate >= now && e.active
+          }) || sortedEvents.find((e: Event) => e.active) || sortedEvents[0]
+          
+          if (nextEvent) {
+            setSelectedEventId(nextEvent.id)
+            Cookies.set(COORDINATOR_EVENT_ID_COOKIE, String(nextEvent.id), { expires: 7 })
+            onEventChange?.(nextEvent.id)
+          }
         }
       }
     } catch (error) {
