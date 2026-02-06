@@ -437,7 +437,7 @@ export default function CoordinatorPositionsPage() {
             {lastUpdate && (
               <span className="text-xs text-gray-500 flex items-center gap-1">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                Live • {floats.length} floats
+                Live • {floats.length} {floats.length === 1 ? labels.entry.toLowerCase() : labels.entryPlural.toLowerCase()}
               </span>
             )}
           </div>
