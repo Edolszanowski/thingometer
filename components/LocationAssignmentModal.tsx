@@ -62,7 +62,10 @@ export function LocationAssignmentModal({
     const initMap = async () => {
       try {
         const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS
+        console.log("[LocationModal] Initializing map, API key present:", !!apiKey, "Key length:", apiKey?.length || 0)
+        
         if (!apiKey || apiKey === "YOUR_GOOGLE_MAPS_API_KEY_HERE") {
+          console.error("[LocationModal] Google Maps API key not configured")
           toast.error("Google Maps API key not configured")
           return
         }
@@ -156,9 +159,10 @@ export function LocationAssignmentModal({
           })
         }
 
+        console.log("[LocationModal] Map initialized successfully")
         setMapLoaded(true)
       } catch (error) {
-        console.error("Error loading Google Maps:", error)
+        console.error("[LocationModal] Error loading Google Maps:", error)
         toast.error("Failed to load map. You can still enter address manually.")
       }
     }
@@ -305,16 +309,18 @@ export function LocationAssignmentModal({
             <label className="block text-sm font-medium mb-1">
               Map Location
             </label>
-            <div
-              ref={mapRef}
-              className="w-full h-96 rounded-lg border border-gray-300"
-              style={{ minHeight: "400px" }}
-            />
-            {!mapLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
-                <p className="text-muted-foreground">Loading map...</p>
-              </div>
-            )}
+            <div className="relative">
+              <div
+                ref={mapRef}
+                className="w-full h-96 rounded-lg border border-gray-300 bg-gray-100"
+                style={{ minHeight: "400px" }}
+              />
+              {!mapLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
+                  <p className="text-muted-foreground">Loading map...</p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Selected Address Display */}
