@@ -395,7 +395,7 @@ class OfflineQueue {
     if (typeof window === 'undefined') return
     
     try {
-      const queue = this.loadQueue()
+      const queue = this.getQueue()
       const validQueue = queue.filter(item => {
         // Check if any score value is 0 (which might be invalid)
         const hasZeroScores = Object.values(item.scores).some(v => v === 0)
