@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { BarChart3, Calendar, Users, FileText, Settings, ArrowRight } from "lucide-react"
 import { AdminEventSelector, getAdminEventId } from "@/components/AdminEventSelector"
 import Link from "next/link"
+import { deleteCookie } from "@/lib/cookies-client"
 
 interface Event {
   id: number
@@ -199,8 +200,9 @@ export default function AdminDashboard() {
           <AdminEventSelector onEventChange={handleEventChange} />
           <Button
             onClick={() => {
-              document.cookie = "admin-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-              document.cookie = "admin-event-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
+              deleteCookie('admin-auth')
+              deleteCookie('admin-event-id')
+              deleteCookie('admin-city-id')
               router.push("/admin")
             }}
             variant="outline"

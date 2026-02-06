@@ -2,21 +2,11 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { setCookie } from "@/lib/cookies-client"
 
 type Judge = {
   id: number
   name: string
-}
-
-function setCookie(name: string, value: string, maxAgeSeconds: number) {
-  const isProduction = window.location.protocol === 'https:'
-  const secureFlag = isProduction ? '; secure' : ''
-  // Don't set domain - let browser handle it automatically for better compatibility
-  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; samesite=lax${secureFlag}`
-  
-  // Debug: verify cookie was set
-  console.log(`[setCookie] Set ${name}=${value.substring(0, 10)}... (maxAge: ${maxAgeSeconds}s, secure: ${isProduction})`)
-  console.log(`[setCookie] Current cookies:`, document.cookie)
 }
 
 function JudgeLoginInner() {

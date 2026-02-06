@@ -1,35 +1,55 @@
-import Cookies from "js-cookie"
+/**
+ * Client-Side Cookie Utilities
+ * 
+ * Production-safe cookie operations that work correctly over HTTPS.
+ * Automatically adds secure and sameSite flags when running on HTTPS.
+ */
 
-const JUDGE_ID_COOKIE = "parade-judge-id"
-const JUDGE_ID_COOKIE_CLIENT = "parade-judge-id-client"
-
-// Client-side helpers
-export function getJudgeIdClient(): number | null {
-  // Try to read from the client-readable cookie first
-  let judgeId = Cookies.get(JUDGE_ID_COOKIE_CLIENT)
+/**
+ * Set a cookie with production-safe flags
+ */
+export function setCookie(name: string, value: string, maxAgeSeconds: number): void {
+  if (typeof window === 'undefined') return
   
-  // Fallback to the original cookie name (in case it's not httpOnly)
-  if (!judgeId) {
-    judgeId = Cookies.get(JUDGE_ID_COOKIE)
-  }
+  const isProduction = window.location.protocol === 'https:'
+  const secureFlag = isProduction ? '; secure' : ''
   
-  if (judgeId) {
-    const id = parseInt(judgeId, 10)
-    return isNaN(id) ? null : id
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; samesite=lax${secureFlag}`
+  
+  // Debug log in development
+  if (!isProduction) {
+    console.log(`[setCookie] Set ${name} (maxAge: ${maxAgeSeconds}s)`)
   }
-  return null
 }
 
-export function setJudgeIdClient(judgeId: number): void {
-  // Set both cookie names for consistency
-  Cookies.set(JUDGE_ID_COOKIE, judgeId.toString(), {
-    expires: 7, // 7 days
-    sameSite: "lax",
-  })
-  Cookies.set(JUDGE_ID_COOKIE_CLIENT, judgeId.toString(), {
-    expires: 7, // 7 days
-    sameSite: "lax",
-  })
+/**
+ * Delete a cookie with production-safe flags
+ */
+export function deleteCookie(name: string): void {
+  if (typeof window === 'undefined') return
+  
+  const isProduction = window.location.protocol === 'https:'
+  const secureFlag = isProduction ? '; secure' : ''
+  
+  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; samesite=lax${secureFlag}`
+  
+  // Debug log in development
+  if (!isProduction) {
+    console.log(`[deleteCookie] Deleted ${name}`)
+  }
 }
 
-
+/**
+ * Get a cookie value (client-side only)
+ */
+export function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  
+  const cookies = document.cookie.split(';')
+  const cookie = cookies.find(c => c.trim().startsWith(`${name}=`))
+  
+  if (!cookie) return null
+  
+  const value = cookie.split('=')[1]
+  return value ? decodeURIComponent(value) : null
+}

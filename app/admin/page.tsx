@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { Eye, EyeOff, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import { setCookie } from "@/lib/cookies-client"
 
 interface City {
   id: number
@@ -65,9 +66,9 @@ export default function AdminPage() {
       )
 
       if (response.ok) {
-        // Store admin session with city
-        document.cookie = `admin-auth=${password}; path=/; max-age=3600`
-        document.cookie = `admin-city-id=${cityId}; path=/; max-age=3600`
+        // Store admin session with city (1 hour expiry)
+        setCookie('admin-auth', password, 3600)
+        setCookie('admin-city-id', String(cityId), 3600)
         toast.success("Access granted")
         router.push("/admin/dashboard")
       } else if (response.status === 401) {
