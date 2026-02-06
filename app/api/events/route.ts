@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db, schema } from "@/lib/db"
-import { eq, asc } from "drizzle-orm"
+import { createClient } from "@supabase/supabase-js"
 
 // Force dynamic rendering
 export const dynamic = 'force-dynamic'
@@ -9,48 +8,82 @@ export const dynamic = 'force-dynamic'
 // Optionally filter by cityId
 export async function GET(request: NextRequest) {
   try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json(
+        {
+          error:
+            "Missing required environment variables: NEXT_PUBLIC_SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY",
+        },
+        { status: 500 }
+      )
+    }
+
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
+
     const searchParams = request.nextUrl.searchParams
     const cityIdParam = searchParams.get("cityId")
     const cityId = cityIdParam ? parseInt(cityIdParam, 10) : null
 
     try {
-      // Build query - filter by cityId if provided
-      let query = db
-        .select({
-          id: schema.events.id,
-          name: schema.events.name,
-          city: schema.events.city,
-          eventDate: schema.events.eventDate,
-          active: schema.events.active,
-          entryCategoryTitle: schema.events.entryCategoryTitle,
-          createdAt: schema.events.createdAt,
-          updatedAt: schema.events.updatedAt,
-        })
-        .from(schema.events)
+      const baseSelect = "id,name,city,event_date,active,entry_category_title,created_at,updated_at,city_id,type,organization"
 
-      // Filter by cityId if provided
-      if (cityId && cityId !== 0) {
-        try {
-          query = query.where(eq(schema.events.cityId, cityId)) as any
-        } catch (error: any) {
-          // If city_id column doesn't exist, ignore filter (backward compatibility)
-          if (error?.code !== "42703" && !error?.message?.includes("does not exist")) {
-            throw error
-          }
+      // Prefer filtering in the query for efficiency while keeping the same response shape.
+      let query = supabase
+        .from("events")
+        .select(baseSelect)
+        .eq("active", true)
+        .order("event_date", { ascending: true })
+
+      if (cityId && cityId !== 0 && !isNaN(cityId)) {
+        query = query.eq("city_id", cityId)
+      }
+
+      let { data, error } = await query
+
+      // Backward compatibility: if city_id doesn't exist, retry without the filter.
+      if (error && cityId && cityId !== 0) {
+        const msg = String((error as any)?.message || "")
+        if (msg.includes("does not exist") || msg.includes("city_id")) {
+          const retry = await supabase
+            .from("events")
+            .select("id,name,city,event_date,active,entry_category_title,created_at,updated_at")
+            .eq("active", true)
+            .order("event_date", { ascending: true })
+
+          data = retry.data as any
+          error = retry.error as any
         }
       }
 
-      const allEvents = await query.orderBy(asc(schema.events.eventDate))
+      if (error) {
+        throw error
+      }
 
-      // Filter for active events (active is a boolean field)
-      const activeEvents = allEvents.filter((event: typeof schema.events.$inferSelect) => event.active === true)
+      const activeEvents = (data || []).map((e: any) => ({
+        id: e.id,
+        name: e.name,
+        city: e.city,
+        eventDate: e.event_date ?? null,
+        active: e.active,
+        entryCategoryTitle: e.entry_category_title ?? null,
+        createdAt: e.created_at ?? null,
+        updatedAt: e.updated_at ?? null,
+        type: e.type ?? null,
+        organization: e.organization ?? null,
+      }))
 
-      console.log(`[api/events] Found ${allEvents.length} total events, ${activeEvents.length} active events`)
-      
+      console.log(
+        `[api/events] Found ${activeEvents.length} active events`
+      )
+
       return NextResponse.json(activeEvents)
     } catch (dbError: any) {
       // If events table doesn't exist yet, return empty array
-      if (dbError?.code === "42P01" || dbError?.message?.includes("does not exist")) {
+      const msg = String(dbError?.message || "")
+      if (dbError?.code === "42P01" || msg.includes("does not exist")) {
         console.log("[api/events] Events table does not exist yet, returning empty array")
         return NextResponse.json([])
       }

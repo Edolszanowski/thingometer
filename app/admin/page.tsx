@@ -69,7 +69,7 @@ export default function AdminPage() {
         document.cookie = `admin-auth=${password}; path=/; max-age=3600`
         document.cookie = `admin-city-id=${cityId}; path=/; max-age=3600`
         toast.success("Access granted")
-        router.push("/admin/results")
+        router.push("/admin/dashboard")
       } else if (response.status === 401) {
         toast.error("Incorrect password. Try again.")
         setPassword("")

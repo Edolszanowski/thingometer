@@ -1,7 +1,6 @@
 "use client"
 
 import { useRouter, usePathname } from "next/navigation"
-import Link from "next/link"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { getJudgeIdClient } from "@/lib/cookies-client"
@@ -39,11 +38,17 @@ export function QuickJumpBar({
       if (!judgeId) return
 
       const timestamp = Date.now()
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:35',message:'fetchFloats called',data:{judgeId,timestamp},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       const response = await fetch(`/api/floats?judgeId=${judgeId}&_t=${timestamp}`, {
         cache: 'no-store',
       })
       if (response.ok) {
         const floats = await response.json()
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:45',message:'Floats received from API',data:{floatCount:floats.length,statuses:floats.slice(0,5).map((f:any)=>({floatNumber:f.floatNumber,scoreStatus:f.scoreStatus}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         
         const map = new Map<number, FloatData>()
         const existingFloatNumbers = new Set<number>()
@@ -84,6 +89,9 @@ export function QuickJumpBar({
           existingFloatNumbers.add(float.floatNumber)
         })
         
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:86',message:'Setting floatData state',data:{mapSize:map.size,statuses:Array.from(map.values()).slice(0,5).map(f=>({floatNumber:f.floatNumber,scoreStatus:f.scoreStatus}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+        // #endregion
         setFloatData(map)
       }
     } catch (error) {
@@ -95,8 +103,15 @@ export function QuickJumpBar({
     // Fetch float data on mount
     fetchFloats()
 
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:93',message:'Event listener registered for scoreSaved',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+
     // Listen for score saved events to update
     const handleScoreSaved = () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:98',message:'scoreSaved event received',data:{timestamp:Date.now()},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       fetchFloats()
     }
 
@@ -118,7 +133,16 @@ export function QuickJumpBar({
 
   // Refresh when pathname changes (navigating between floats)
   useEffect(() => {
-    fetchFloats()
+    // #region agent log
+    fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'QuickJumpBar.tsx:119',message:'Pathname changed - scheduling fetch',data:{pathname,totalFloats},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    // Add small delay to ensure database has committed any pending saves
+    // before fetching updated status
+    const timer = setTimeout(() => {
+      fetchFloats()
+    }, 150)
+    
+    return () => clearTimeout(timer)
   }, [pathname, totalFloats])
 
   const handleJump = async (floatNumber: number, e?: React.MouseEvent) => {
@@ -134,22 +158,26 @@ export function QuickJumpBar({
       return
     }
     
-    // Trigger save and wait briefly
-    window.dispatchEvent(new CustomEvent("forceSave", {}))
+    // Trigger save with navigation flag to show spinner overlay
+    window.dispatchEvent(new CustomEvent("forceSave", { detail: { showOverlay: true } }))
+    
+    // Wait a moment for the save event to be processed and overlay to show
+    await new Promise(resolve => setTimeout(resolve, 150))
     
     if (saveManager.hasPendingSaves()) {
-      const loadingToast = toast.loading("Saving...", { id: `nav-${floatNumber}` })
       try {
         await saveManager.waitForAllSaves(3000)
-        toast.dismiss(loadingToast)
+        // Wait a bit more to ensure save is fully processed
+        await new Promise(resolve => setTimeout(resolve, 200))
       } catch {
-        toast.dismiss(loadingToast)
         saveManager.clear()
       }
     }
     
+    // Use router.refresh() to ensure fresh data after navigation
     if (floatInfo?.id) {
       router.push(`/float/${floatInfo.id}`)
+      router.refresh() // Force refetch of server component data
       return
     }
     
@@ -168,6 +196,7 @@ export function QuickJumpBar({
       
       if (float?.id) {
         router.push(`/float/${float.id}`)
+        router.refresh() // Force refetch of server component data
       }
     } catch (error) {
       console.error("[QuickJumpBar] Error:", error)
@@ -181,8 +210,8 @@ export function QuickJumpBar({
 
   // Helper function to get button color class based on status
   const getButtonColorClass = (scoreStatus: ScoreStatus, isCurrent: boolean): string => {
-    // Base classes - centered text
-    let baseClass = "min-w-[44px] h-10 px-3 rounded-md font-medium transition-colors cursor-pointer flex items-center justify-center "
+    // Base classes - smaller on mobile, larger on desktop
+    let baseClass = "min-w-[36px] sm:min-w-[44px] h-8 sm:h-10 px-2 sm:px-3 rounded-md text-sm sm:text-base font-medium transition-colors cursor-pointer flex items-center justify-center "
     
     // Color rules (in priority order):
     // 1. Grey: no_organization OR not_found (highest priority)
@@ -219,59 +248,53 @@ export function QuickJumpBar({
     return baseClass
   }
 
+  // Create sorted array of float numbers for sequential display (1, 2, 3...)
+  const sortedFloatNumbers = Array.from(floatData.values())
+    .sort((a, b) => a.floatNumber - b.floatNumber)
+    .map(f => f.floatNumber)
+
   return (
     <div className="sticky top-0 z-10 bg-white border-b shadow-sm">
       <div className="overflow-x-auto">
         <div className="flex space-x-2 p-2 min-w-max">
-          {Array.from({ length: totalFloats }, (_, i) => i + 1).map((floatNumber) => {
-            const floatInfo = floatData.get(floatNumber)
+          {Array.from({ length: totalFloats }, (_, i) => i + 1).map((displayNumber) => {
+            // Map sequential display number (1, 2, 3...) to actual floatNumber (101, 102, 103...)
+            const actualFloatNumber = sortedFloatNumbers[displayNumber - 1]
+            const floatInfo = actualFloatNumber ? floatData.get(actualFloatNumber) : null
             
             // Determine status: if float doesn't exist, it's not_found (grey)
             const scoreStatus: ScoreStatus = floatInfo 
               ? floatInfo.scoreStatus 
               : 'not_found'
             
-            const isCurrent = floatNumber === currentFloatNumber
+            const isCurrent = actualFloatNumber === currentFloatNumber
             const buttonClass = getButtonColorClass(scoreStatus, isCurrent)
             const floatId = floatInfo?.id
 
             // If float doesn't exist (not_found), show disabled grey button
-            if (scoreStatus === 'not_found') {
+            if (scoreStatus === 'not_found' || !floatInfo) {
               return (
                 <button
-                  key={floatNumber}
+                  key={displayNumber}
                   disabled
                   className={buttonClass + " opacity-50 cursor-not-allowed"}
                   type="button"
                   title={`${labels?.entry ?? "Float"} not found`}
                 >
-                  {floatNumber}
+                  {displayNumber}
                 </button>
               )
             }
             
-            // If we have the floatId, use Link for reliable navigation
-            if (floatId) {
-              return (
-                <Link
-                  key={floatNumber}
-                  href={`/float/${floatId}`}
-                  className={buttonClass}
-                >
-                  {floatNumber}
-                </Link>
-              )
-            }
-            
-            // Fallback to button if floatId not available yet (but float exists)
+            // Use button with handleJump for all navigation to ensure saves
             return (
               <button
-                key={floatNumber}
-                onClick={(e) => handleJump(floatNumber, e)}
+                key={displayNumber}
+                onClick={(e) => handleJump(actualFloatNumber, e)}
                 className={buttonClass}
                 type="button"
               >
-                {floatNumber}
+                {displayNumber}
               </button>
             )
           })}

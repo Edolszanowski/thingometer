@@ -1,86 +1,59 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db, schema } from "@/lib/db"
-import { getEventJudges } from "@/lib/scores"
-import { eq, and, inArray } from "drizzle-orm"
+import { createClient } from "@supabase/supabase-js"
 
-// Force dynamic rendering
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic"
 
-// GET - Get judges for an event (or all judges if no eventId)
-// Optionally filter by cityId
-export async function GET(request: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const eventIdParam = searchParams.get("eventId")
-    const eventId = eventIdParam ? parseInt(eventIdParam, 10) : null
-    const cityIdParam = searchParams.get("cityId")
-    const cityId = cityIdParam ? parseInt(cityIdParam, 10) : null
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-    // Build conditions
-    const conditions: any[] = []
-
-    // Filter by city through events
-    if (cityId && cityId !== 0) {
-      try {
-        // Get events for this city
-        const cityEvents = await db
-          .select({ id: schema.events.id })
-          .from(schema.events)
-          .where(eq(schema.events.cityId, cityId))
-        
-        const eventIds = cityEvents.map((e: { id: number }) => e.id)
-        
-        if (eventIds.length > 0) {
-          if (eventId && !isNaN(eventId)) {
-            // Also filter by specific eventId if provided
-            if (eventIds.includes(eventId)) {
-              conditions.push(eq(schema.judges.eventId, eventId))
-            } else {
-              // Event doesn't belong to this city
-              return NextResponse.json([])
-            }
-          } else {
-            // Filter by any event in this city
-            conditions.push(inArray(schema.judges.eventId, eventIds))
-          }
-        } else {
-          // No events for this city
-          return NextResponse.json([])
-        }
-      } catch (error: any) {
-        // If city_id column doesn't exist, fall back to eventId only
-        if (error?.code === "42703" || error?.message?.includes("does not exist")) {
-          if (eventId && !isNaN(eventId)) {
-            conditions.push(eq(schema.judges.eventId, eventId))
-          }
-        } else {
-          throw error
-        }
-      }
-    } else if (eventId && !isNaN(eventId)) {
-      // No city filter, but eventId provided
-      conditions.push(eq(schema.judges.eventId, eventId))
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json(
+        { error: "Missing Supabase configuration" },
+        { status: 500 }
+      )
     }
 
-    // Execute query
-    if (conditions.length > 0) {
-      const judges = await db
-        .select()
-        .from(schema.judges)
-        .where(and(...conditions))
-        .orderBy(schema.judges.name)
-      return NextResponse.json(judges)
-    } else {
-      // Get all judges (for backward compatibility)
-      const judges = await db
-        .select()
-        .from(schema.judges)
-        .orderBy(schema.judges.name)
-      return NextResponse.json(judges)
+    const supabase = createClient(supabaseUrl, serviceRoleKey)
+
+    const eventIdParam = req.nextUrl.searchParams.get("eventId")
+    const eventId = Number(eventIdParam)
+
+    if (!Number.isFinite(eventId) || eventId <= 0) {
+      return NextResponse.json(
+        { error: "Invalid or missing eventId" },
+        { status: 400 }
+      )
     }
-  } catch (error: any) {
-    console.error("Error fetching judges:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+
+    const { data, error } = await supabase
+      .from("judges")
+      .select("id,name,submitted")
+      .eq("event_id", eventId)
+      .order("name", { ascending: true })
+
+    if (error) {
+      console.error("[api/judges] Supabase error:", error)
+      return NextResponse.json(
+        { error: "Failed to load judges" },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json(data ?? [])
+  } catch (err: any) {
+    console.error("[api/judges] Unhandled error:", err)
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details:
+          process.env.NODE_ENV === "development"
+            ? String(err?.message ?? err)
+            : undefined,
+      },
+      { status: 500 }
+    )
   }
 }
 

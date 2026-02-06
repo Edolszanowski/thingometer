@@ -32,7 +32,7 @@ export default function CoordinatorQRPage() {
   useEffect(() => {
     // Check coordinator access
     if (!isCoordinator()) {
-      router.push("/admin")
+      router.push("/admin/dashboard")
       return
     }
 

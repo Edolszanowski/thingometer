@@ -15,7 +15,7 @@ import { SubmitButton } from "@/components/SubmitButton"
 import { LogoutButton } from "@/components/LogoutButton"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { loadLabelsForEventId } from "@/lib/labels"
+import { loadLabelsForEventId } from "@/lib/labels-server"
 
 // Force dynamic rendering since we use cookies
 export const dynamic = 'force-dynamic'
@@ -159,7 +159,7 @@ export default async function ReviewPage() {
         <div className="text-sm font-medium" style={{ color: "#DC2626" }}>
           {judge[0].name}
         </div>
-        <Link href="/judge">
+        <Link href="/api/judge/logout?returnTo=/judge/login">
           <Button variant="ghost" size="sm" className="text-xs">
             Change Judge
           </Button>

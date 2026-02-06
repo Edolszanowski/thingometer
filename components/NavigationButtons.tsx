@@ -24,8 +24,8 @@ export function NavigationButtons({ previousFloat, nextFloat, labels }: Navigati
     const loadingToast = toast.loading("Saving scores...", { id: "nav-save" })
     
     try {
-      // CRITICAL: Trigger immediate save before waiting
-      window.dispatchEvent(new CustomEvent("forceSave", {}))
+      // CRITICAL: Trigger immediate save before waiting (show overlay)
+      window.dispatchEvent(new CustomEvent("forceSave", { detail: { showOverlay: true } }))
       
       // Wait for save to start
       await new Promise(resolve => setTimeout(resolve, 150))

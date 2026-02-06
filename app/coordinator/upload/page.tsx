@@ -388,7 +388,7 @@ export default function CoordinatorUploadPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -487,7 +487,7 @@ export default function CoordinatorUploadPage() {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={() => router.push("/admin")}
+              onClick={() => router.push("/admin/dashboard")}
               variant="outline"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />

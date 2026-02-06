@@ -51,11 +51,14 @@ export function AdminJudgeStatus({ judges, onUnlock }: AdminJudgeStatusProps) {
 
       if (response.ok) {
         toast.success(`Scores unlocked for ${judgeName}`)
+        // Call the callback to trigger a refetch
         if (onUnlock) {
           onUnlock(judgeId)
+        } else {
+          // Fallback: wait a moment for database propagation, then reload
+          await new Promise(resolve => setTimeout(resolve, 500))
+          window.location.reload()
         }
-        // Refresh the page to update the status
-        window.location.reload()
       } else {
         const error = await response.json()
         toast.error(error.error || "Failed to unlock scores")

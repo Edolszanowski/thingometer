@@ -54,6 +54,7 @@ export default function AdminResultsPage() {
   const [eventName, setEventName] = useState<string>("")
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [labels, setLabels] = useState<UiLabels>(getDefaultLabels())
+  const [ageGroupFilter, setAgeGroupFilter] = useState<string>("")
 
   // Initialize selectedEventId from cookie on mount
   useEffect(() => {
@@ -84,7 +85,7 @@ export default function AdminResultsPage() {
   const fetchData = useCallback(async () => {
     const password = getAdminPassword()
     if (!password) {
-      router.push("/admin")
+      router.push("/admin/dashboard")
       return
     }
 
@@ -111,7 +112,7 @@ export default function AdminResultsPage() {
 
       if (!winnersRes.ok || !judgesRes.ok) {
         if (winnersRes.status === 401 || judgesRes.status === 401) {
-          router.push("/admin")
+          router.push("/admin/dashboard")
           return
         }
         throw new Error("Failed to fetch data")
@@ -119,6 +120,11 @@ export default function AdminResultsPage() {
 
       const winnersData = await winnersRes.json()
       const judgesData = await judgesRes.json()
+
+      // #region agent log
+      const drBoothe = judgesData?.find?.((j: any) => j.name?.toLowerCase().includes('boothe'));
+      fetch('http://127.0.0.1:7244/ingest/b9cff614-5356-493b-8a2f-a25c3a6bf3a0',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'admin/results:fetchData',message:'Judges data received',data:{totalJudges:judgesData?.length,drBoothe:drBoothe||null},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'H3-H4'})}).catch(()=>{});
+      // #endregion
 
       setWinners(winnersData)
       setJudges(judgesData)
@@ -136,6 +142,33 @@ export default function AdminResultsPage() {
     fetchData()
   }, [fetchData])
 
+  // Event context check - redirect to dashboard if no events exist
+  useEffect(() => {
+    const checkEventContext = async () => {
+      if (selectedEventId === null) {
+        const password = getAdminPassword()
+        if (!password) {
+          router.push("/admin/dashboard")
+          return
+        }
+
+        try {
+          const response = await fetch(`/api/admin/events?password=${encodeURIComponent(password)}`)
+          if (response.ok) {
+            const events = await response.json()
+            if (events.length === 0) {
+              toast.info("Create an event first")
+              router.push("/admin/dashboard")
+            }
+          }
+        } catch (error) {
+          console.error("Error checking events:", error)
+        }
+      }
+    }
+    checkEventContext()
+  }, [selectedEventId, router])
+
   // Subscribe to realtime updates on scores, judges, and floats tables
   useRealtimeCallback(
     ['scores', 'score_items', 'judges', 'floats', 'judge_submissions'],
@@ -146,7 +179,7 @@ export default function AdminResultsPage() {
   const handleExportCSV = async () => {
     const password = getAdminPassword()
     if (!password) {
-      router.push("/admin")
+      router.push("/admin/dashboard")
       return
     }
 
@@ -238,7 +271,7 @@ export default function AdminResultsPage() {
               document.cookie = "admin-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
               // Clear admin event cookie
               document.cookie = "admin-event-id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-              router.push("/admin")
+              router.push("/admin/dashboard")
             }}
             variant="outline"
             className="flex-1 sm:flex-none min-w-[80px] text-xs sm:text-sm"
@@ -251,16 +284,38 @@ export default function AdminResultsPage() {
       <div className="mb-6 sm:mb-8">
         <h2 className="text-xl sm:text-2xl font-bold mb-3 sm:mb-4">Judge Completion Status</h2>
         <div className="overflow-x-auto">
-          <AdminJudgeStatus judges={judges} />
+          <AdminJudgeStatus 
+            judges={judges} 
+            onUnlock={async (judgeId) => {
+              // Wait a moment for database propagation
+              await new Promise(resolve => setTimeout(resolve, 500))
+              // Refetch data
+              await fetchData()
+            }}
+          />
         </div>
       </div>
 
       <div className="space-y-4 sm:space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h2 className="text-xl sm:text-2xl font-bold">Category Winners</h2>
-          {winners && (
-            <WinnersFullscreen winners={winners} eventName={eventName} labels={labels} />
-          )}
+          <div className="flex items-center gap-3">
+            {/* Age Group Filter for Lemonade Day */}
+            <select 
+              value={ageGroupFilter}
+              onChange={(e) => setAgeGroupFilter(e.target.value)}
+              className="text-sm border rounded px-3 py-2"
+            >
+              <option value="">All Age Groups</option>
+              <option value="6-8">6-8 years</option>
+              <option value="9-11">9-11 years</option>
+              <option value="12-14">12-14 years</option>
+              <option value="15-18">15-18 years</option>
+            </select>
+            {winners && (
+              <WinnersFullscreen winners={winners} eventName={eventName} labels={labels} />
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -270,14 +325,22 @@ export default function AdminResultsPage() {
               {winners.categories && Object.keys(winners.categories).length > 0 ? (
                 <>
                   {Object.entries(winners.categories).map(([categoryName, categoryWinners]) => {
+                    // Filter by age group if selected
+                    const filteredWinners = ageGroupFilter 
+                      ? categoryWinners.filter((w: Winner) => {
+                          const ageGroup = (w.float.metadata as any)?.lemonadeDay?.ageGroup
+                          return ageGroup === ageGroupFilter
+                        })
+                      : categoryWinners
+                    
                     // Special handling for "Entry" category - use custom title
                     if (categoryName === "Entry") {
                       const title = winners.entryCategoryTitle || "Best Entry"
                       return (
                         <AdminWinnerCard
                           key={categoryName}
-                          title={title}
-                          winners={categoryWinners}
+                          title={ageGroupFilter ? `${title} (${ageGroupFilter} years)` : title}
+                          winners={filteredWinners}
                           labels={labels}
                         />
                       )
@@ -286,8 +349,8 @@ export default function AdminResultsPage() {
                     return (
                       <AdminWinnerCard
                         key={categoryName}
-                        title={`Best ${categoryName}`}
-                        winners={categoryWinners}
+                        title={ageGroupFilter ? `Best ${categoryName} (${ageGroupFilter} years)` : `Best ${categoryName}`}
+                        winners={filteredWinners}
                         labels={labels}
                       />
                     )
@@ -296,36 +359,50 @@ export default function AdminResultsPage() {
               ) : (
                 <>
                   {/* Fallback to hardcoded categories for backward compatibility */}
-                  <AdminWinnerCard
-                    title="Best Lighting"
-                    winners={winners.bestLighting}
-                    labels={labels}
-                  />
-                  <AdminWinnerCard
-                    title="Best Theme"
-                    winners={winners.bestTheme}
-                    labels={labels}
-                  />
-                  <AdminWinnerCard
-                    title="Best Traditions"
-                    winners={winners.bestTraditions}
-                    labels={labels}
-                  />
-                  <AdminWinnerCard
-                    title="Best Spirit"
-                    winners={winners.bestSpirit}
-                    labels={labels}
-                  />
-                  <AdminWinnerCard
-                    title="Best Music"
-                    winners={winners.bestMusic}
-                    labels={labels}
-                  />
-                  <AdminWinnerCard
-                    title="Best Overall Entry"
-                    winners={winners.bestOverall}
-                    labels={labels}
-                  />
+                  {(() => {
+                    // Filter by age group if selected
+                    const filterByAge = (winners: Winner[]) => ageGroupFilter 
+                      ? winners.filter((w: Winner) => {
+                          const ageGroup = (w.float.metadata as any)?.lemonadeDay?.ageGroup
+                          return ageGroup === ageGroupFilter
+                        })
+                      : winners
+                    
+                    return (
+                      <>
+                        <AdminWinnerCard
+                          title={ageGroupFilter ? `Best Lighting (${ageGroupFilter} years)` : "Best Lighting"}
+                          winners={filterByAge(winners.bestLighting)}
+                          labels={labels}
+                        />
+                        <AdminWinnerCard
+                          title={ageGroupFilter ? `Best Theme (${ageGroupFilter} years)` : "Best Theme"}
+                          winners={filterByAge(winners.bestTheme)}
+                          labels={labels}
+                        />
+                        <AdminWinnerCard
+                          title={ageGroupFilter ? `Best Traditions (${ageGroupFilter} years)` : "Best Traditions"}
+                          winners={filterByAge(winners.bestTraditions)}
+                          labels={labels}
+                        />
+                        <AdminWinnerCard
+                          title={ageGroupFilter ? `Best Spirit (${ageGroupFilter} years)` : "Best Spirit"}
+                          winners={filterByAge(winners.bestSpirit)}
+                          labels={labels}
+                        />
+                        <AdminWinnerCard
+                          title={ageGroupFilter ? `Best Music (${ageGroupFilter} years)` : "Best Music"}
+                          winners={filterByAge(winners.bestMusic)}
+                          labels={labels}
+                        />
+                        <AdminWinnerCard
+                          title={ageGroupFilter ? `Best Overall Entry (${ageGroupFilter} years)` : "Best Overall Entry"}
+                          winners={filterByAge(winners.bestOverall)}
+                          labels={labels}
+                        />
+                      </>
+                    )
+                  })()}
                 </>
               )}
             </>

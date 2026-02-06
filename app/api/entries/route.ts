@@ -83,54 +83,71 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate driver information
-    if (!driverFirstName || !driverFirstName.trim()) {
-      return NextResponse.json(
-        { error: "Driver First Name is required" },
-        { status: 400 }
-      )
-    }
+    // Check if this is a Lemonade Day entry (has guardian/consent metadata)
+    const isLemonadeDay = metadata?.guardian && metadata?.consent
 
-    if (!driverLastName || !driverLastName.trim()) {
-      return NextResponse.json(
-        { error: "Driver Last Name is required" },
-        { status: 400 }
-      )
-    }
+    // Validate driver information - only required for parade entries
+    if (!isLemonadeDay) {
+      if (!driverFirstName || !driverFirstName.trim()) {
+        return NextResponse.json(
+          { error: "Driver First Name is required" },
+          { status: 400 }
+        )
+      }
 
-    if (!driverPhone || !driverPhone.trim()) {
-      return NextResponse.json(
-        { error: "Driver Phone Number is required" },
-        { status: 400 }
-      )
-    }
+      if (!driverLastName || !driverLastName.trim()) {
+        return NextResponse.json(
+          { error: "Driver Last Name is required" },
+          { status: 400 }
+        )
+      }
 
-    if (!driverEmail || !driverEmail.trim()) {
-      return NextResponse.json(
-        { error: "Driver Email is required" },
-        { status: 400 }
-      )
-    }
+      if (!driverPhone || !driverPhone.trim()) {
+        return NextResponse.json(
+          { error: "Driver Phone Number is required" },
+          { status: 400 }
+        )
+      }
 
-    if (!emailRegex.test(driverEmail.trim())) {
-      return NextResponse.json(
-        { error: "Invalid driver email format" },
-        { status: 400 }
-      )
+      if (!driverEmail || !driverEmail.trim()) {
+        return NextResponse.json(
+          { error: "Driver Email is required" },
+          { status: 400 }
+        )
+      }
+
+      if (!emailRegex.test(driverEmail.trim())) {
+        return NextResponse.json(
+          { error: "Invalid driver email format" },
+          { status: 400 }
+        )
+      }
+
+      if (!typeOfEntry || !typeOfEntry.trim()) {
+        return NextResponse.json(
+          { error: "Type of Entry is required" },
+          { status: 400 }
+        )
+      }
     }
 
     if (!floatDescription || !floatDescription.trim()) {
       return NextResponse.json(
-        { error: "Float Description is required" },
+        { error: isLemonadeDay ? "Stand description is required" : "Float Description is required" },
         { status: 400 }
       )
     }
 
-    if (!typeOfEntry || !typeOfEntry.trim()) {
-      return NextResponse.json(
-        { error: "Type of Entry is required" },
-        { status: 400 }
-      )
+    // For Lemonade Day: Capture IP address and user agent for e-signature audit trail
+    if (isLemonadeDay && metadata?.consent) {
+      const forwarded = request.headers.get("x-forwarded-for")
+      const ipAddress = forwarded ? forwarded.split(",")[0].trim() : request.headers.get("x-real-ip") || "unknown"
+      const userAgent = request.headers.get("user-agent") || "unknown"
+      
+      // Add server-side e-signature data to consent
+      metadata.consent.ipAddress = ipAddress
+      metadata.consent.userAgent = userAgent
+      metadata.consent.serverTimestamp = new Date().toISOString()
     }
 
     // Get eventId - use provided eventId if available, otherwise get active event
@@ -217,18 +234,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert new entry
-    // Use firstName/lastName/phone/email for driver information (as per requirements)
+    // For Lemonade Day: use child name and guardian contact info
+    // For Parade: use driver information (as per requirements)
     const entryData: any = {
-      firstName: driverFirstName?.trim() || null, // Driver first name
-      lastName: driverLastName?.trim() || null, // Driver last name
+      firstName: isLemonadeDay 
+        ? (firstName?.trim() || null) // Child's first name (passed from form)
+        : (driverFirstName?.trim() || null), // Driver first name
+      lastName: isLemonadeDay
+        ? (lastName?.trim() || null) // Child's last name (passed from form)
+        : (driverLastName?.trim() || null), // Driver last name
       organization: organization.trim(),
       title: title?.trim() || null,
-      phone: driverPhone.trim(), // Driver phone
-      email: driverEmail.trim(), // Driver email
+      phone: isLemonadeDay ? phone.trim() : driverPhone.trim(), // Guardian phone or Driver phone
+      email: isLemonadeDay ? email.trim() : driverEmail.trim(), // Guardian email or Driver email
       entryName: entryName?.trim() || null,
       floatDescription: floatDescription.trim(),
       entryLength: entryLength?.trim() || null,
-      typeOfEntry: typeOfEntry.trim(),
+      typeOfEntry: isLemonadeDay ? "Lemonade Stand" : typeOfEntry.trim(),
       hasMusic: hasMusic === true,
       comments: comments?.trim() || null,
       approved: shouldAutoApprove, // Auto-approve if coordinator requested
@@ -241,12 +263,14 @@ export async function POST(request: NextRequest) {
       entryData.metadata = metadata
     }
     
-    // Store organization contact info in comments if different from driver
-    if (phone.trim() !== driverPhone.trim() || email.trim() !== driverEmail.trim()) {
-      const orgContactInfo = `Organization Contact: ${firstName?.trim() || ''} ${lastName?.trim() || ''} - ${phone.trim()} - ${email.trim()}`
-      entryData.comments = entryData.comments 
-        ? `${entryData.comments}\n\n${orgContactInfo}`
-        : orgContactInfo
+    // Store organization contact info in comments if different from driver (parade entries only)
+    if (!isLemonadeDay && driverPhone && driverEmail) {
+      if (phone.trim() !== driverPhone.trim() || email.trim() !== driverEmail.trim()) {
+        const orgContactInfo = `Organization Contact: ${firstName?.trim() || ''} ${lastName?.trim() || ''} - ${phone.trim()} - ${email.trim()}`
+        entryData.comments = entryData.comments 
+          ? `${entryData.comments}\n\n${orgContactInfo}`
+          : orgContactInfo
+      }
     }
 
     // Add eventId if we found an active event (gracefully handle if column doesn't exist)

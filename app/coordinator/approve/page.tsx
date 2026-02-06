@@ -29,6 +29,10 @@ interface UnapprovedEntry {
   hasMusic: boolean
   comments: string | null
   submittedAt: string | null
+  metadata?: {
+    status?: "pending-consent" | "registered" | "checked-in" | "judged" | "completed"
+    [key: string]: unknown
+  }
 }
 
 function getAdminPassword(): string | null {
@@ -36,6 +40,27 @@ function getAdminPassword(): string | null {
   const cookies = document.cookie.split(";")
   const authCookie = cookies.find((c) => c.trim().startsWith("admin-auth="))
   return authCookie ? authCookie.split("=")[1] : null
+}
+
+// Status badge component
+function StatusBadge({ status }: { status?: string }) {
+  if (!status) return null
+  
+  const colors = {
+    "pending-consent": "bg-orange-100 text-orange-800 border-orange-300",
+    "registered": "bg-blue-100 text-blue-800 border-blue-300",
+    "checked-in": "bg-green-100 text-green-800 border-green-300",
+    "judged": "bg-purple-100 text-purple-800 border-purple-300",
+    "completed": "bg-gray-100 text-gray-800 border-gray-300",
+  }
+  
+  const label = status.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")
+  
+  return (
+    <span className={`px-2 py-1 rounded text-xs font-medium border ${colors[status as keyof typeof colors] || "bg-gray-100 text-gray-800"}`}>
+      {label}
+    </span>
+  )
 }
 
 export default function CoordinatorApprovePage() {
@@ -53,7 +78,7 @@ export default function CoordinatorApprovePage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -65,7 +90,7 @@ export default function CoordinatorApprovePage() {
       const response = await fetch(url)
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -123,7 +148,7 @@ export default function CoordinatorApprovePage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -144,7 +169,7 @@ export default function CoordinatorApprovePage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -175,7 +200,7 @@ export default function CoordinatorApprovePage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -187,7 +212,7 @@ export default function CoordinatorApprovePage() {
       )
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -203,6 +228,44 @@ export default function CoordinatorApprovePage() {
     } catch (error) {
       console.error("Error deleting entry:", error)
       toast.error("Failed to delete entry")
+    } finally {
+      setProcessing(null)
+    }
+  }
+
+  const handleStatusUpdate = async (entryId: number, newStatus: string) => {
+    setProcessing(entryId)
+    try {
+      const password = getAdminPassword()
+      if (!password) {
+        router.push("/admin/dashboard")
+        return
+      }
+
+      const response = await fetch(`/api/entries/${entryId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Admin-Password": password,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      })
+
+      if (response.status === 401) {
+        router.push("/admin/dashboard")
+        return
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "Failed to update status" }))
+        throw new Error(error.error || "Failed to update status")
+      }
+
+      toast.success("Status updated successfully")
+      await fetchEntries(selectedEventId)
+    } catch (error) {
+      console.error("Error updating status:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to update status")
     } finally {
       setProcessing(null)
     }
@@ -282,6 +345,7 @@ export default function CoordinatorApprovePage() {
                           - {entry.entryName}
                         </span>
                       )}
+                      <StatusBadge status={entry.metadata?.status} />
                     </div>
 
                     {viewing === entry.id ? (
@@ -331,6 +395,18 @@ export default function CoordinatorApprovePage() {
                             className="w-32"
                             min="1"
                           />
+                          <select 
+                            value={entry.metadata?.status || "registered"}
+                            onChange={(e) => handleStatusUpdate(entry.id, e.target.value)}
+                            disabled={processing === entry.id}
+                            className="text-sm border rounded px-2 py-1 w-32"
+                          >
+                            <option value="pending-consent">Pending Consent</option>
+                            <option value="registered">Registered</option>
+                            <option value="checked-in">Checked In</option>
+                            <option value="judged">Judged</option>
+                            <option value="completed">Completed</option>
+                          </select>
                           <div className="flex gap-2">
                             <Button
                               size="sm"

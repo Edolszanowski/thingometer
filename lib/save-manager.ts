@@ -5,6 +5,8 @@
  * This ensures navigation blocks until saves complete, preventing data loss.
  */
 
+import { offlineQueue } from './offline-queue'
+
 interface PendingSave {
   floatId: number
   promise: Promise<void>
@@ -113,6 +115,77 @@ class SaveManager {
   clear(): void {
     console.log(`[SaveManager] Clearing all pending saves`)
     this.pendingSaves.clear()
+  }
+
+  /**
+   * Save with offline fallback
+   * Attempts to save to server, but queues to localStorage if offline or on failure
+   * 
+   * @returns Object with saved (true if saved to server) and queued (true if queued offline)
+   */
+  async saveWithOfflineFallback(
+    floatId: number,
+    eventId: number,
+    judgeId: number,
+    scores: Record<string, number | null>
+  ): Promise<{ saved: boolean; queued: boolean }> {
+    // If offline, queue immediately
+    if (!offlineQueue.getIsOnline()) {
+      console.log(`[SaveManager] Offline detected, queueing float ${floatId}`)
+      offlineQueue.addToQueue({
+        floatId,
+        eventId,
+        judgeId,
+        scores,
+        timestamp: Date.now(),
+        retryCount: 0,
+      })
+      return { saved: false, queued: true }
+    }
+
+    // Try to save to server
+    try {
+      const response = await fetch('/api/scores', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          floatId,
+          scores,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: `HTTP ${response.status}` }))
+        throw new Error(error.error || `HTTP ${response.status}`)
+      }
+
+      await response.json()
+      console.log(`[SaveManager] Successfully saved float ${floatId} to server`)
+      
+      // Dispatch scoreSaved event
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('scoreSaved', { 
+          detail: { floatId } 
+        }))
+      }
+      
+      return { saved: true, queued: false }
+      
+    } catch (error) {
+      console.error(`[SaveManager] Save failed for float ${floatId}, queueing:`, error)
+      
+      // Queue for offline sync
+      offlineQueue.addToQueue({
+        floatId,
+        eventId,
+        judgeId,
+        scores,
+        timestamp: Date.now(),
+        retryCount: 0,
+      })
+      
+      return { saved: false, queued: true }
+    }
   }
 }
 

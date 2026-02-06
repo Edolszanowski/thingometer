@@ -5,6 +5,7 @@ import { Slider } from "@/components/ui/slider"
 import { toast } from "sonner"
 import { calculateTotalFromItems } from "@/lib/score-utils"
 import { saveManager } from "@/lib/save-manager"
+import { offlineQueue } from "@/lib/offline-queue"
 
 interface Category {
   id: number
@@ -19,18 +20,30 @@ interface Category {
 interface ScoringSlidersProps {
   floatId: number
   eventId: number
+  judgeId: number
   categories: Category[]
+  scoringScale?: {
+    min: number
+    max: number
+  }
   initialScore?: {
     scores?: Record<string, number | null>
   } | null
+  isLemonadeDay?: boolean
 }
 
 export function ScoringSliders({ 
   floatId, 
   eventId,
+  judgeId,
   categories,
-  initialScore
+  scoringScale,
+  initialScore,
+  isLemonadeDay: isLemonadeDayProp
 }: ScoringSlidersProps) {
+  const scaleMin = Number.isFinite(scoringScale?.min) ? scoringScale!.min : 0
+  const scaleMax = Number.isFinite(scoringScale?.max) ? scoringScale!.max : 20
+
   // Sort categories by display order
   const sortedCategories = [...categories].sort((a, b) => a.displayOrder - b.displayOrder)
   
@@ -47,6 +60,7 @@ export function ScoringSliders({
   const [showSavingOverlay, setShowSavingOverlay] = useState(false) // Only show during navigation
   const [isInitialLoad, setIsInitialLoad] = useState(true)
   const [lastSavedFloatId, setLastSavedFloatId] = useState<number | null>(null)
+  const [isLemonadeDay, setIsLemonadeDay] = useState(isLemonadeDayProp ?? false)
   
   // Refs to track state for save-on-unmount
   const pendingTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -100,6 +114,15 @@ export function ScoringSliders({
         await response.json()
         lastSavedValuesRef.current = { ...scoreValues }
         
+        // Dispatch scoreSaved event to notify QuickJumpBar and other components
+        window.dispatchEvent(new CustomEvent("scoreSaved", { 
+          detail: { floatId: targetFloatId } 
+        }))
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7245/ingest/a5ba889a-046d-43d6-9254-2e116f014c22',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'ScoringSliders.tsx:109',message:'Save successful - scoreSaved event dispatched',data:{floatId:targetFloatId,hasEventDispatch:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        
       } catch (error: any) {
         console.error(`[ScoringSliders] Save failed:`, error)
         
@@ -107,8 +130,24 @@ export function ScoringSliders({
           await new Promise(resolve => setTimeout(resolve, 500))
           isSavingRef.current = false
           return saveScore(scoreValues, skipToast, retryCount + 1)
-        } else if (!skipToast) {
-          toast.error("Failed to save. Please try again.", { duration: 3000 })
+        } else {
+          // After max retries, queue for offline sync instead of losing the score
+          console.log(`[ScoringSliders] Max retries reached, queueing for offline sync`)
+          offlineQueue.addToQueue({
+            floatId: targetFloatId,
+            eventId,
+            judgeId,
+            scores: scoreValues,
+            timestamp: Date.now(),
+            retryCount: 0,
+          })
+          
+          if (!skipToast) {
+            toast.warning("Saved locally - will sync when connected", { 
+              duration: 3000,
+              description: "Your score is safe and will upload automatically"
+            })
+          }
         }
         throw error
       } finally {
@@ -119,6 +158,29 @@ export function ScoringSliders({
     },
     []
   )
+
+  // Check if this is a Lemonade Day event (only if not passed as prop)
+  useEffect(() => {
+    // If prop is provided, use it directly
+    if (isLemonadeDayProp !== undefined) {
+      setIsLemonadeDay(isLemonadeDayProp)
+      return
+    }
+    // Fallback: fetch event type if prop not provided
+    const checkEventType = async () => {
+      try {
+        const response = await fetch(`/api/events?id=${eventId}`)
+        if (response.ok) {
+          const events = await response.json()
+          const event = Array.isArray(events) ? events[0] : events
+          setIsLemonadeDay(event?.type === "lemonade_day")
+        }
+      } catch (error) {
+        console.error("[ScoringSliders] Error checking event type:", error)
+      }
+    }
+    checkEventType()
+  }, [eventId, isLemonadeDayProp])
 
   // Update state when initialScore or floatId changes
   useEffect(() => {
@@ -240,8 +302,12 @@ export function ScoringSliders({
     
     const handleBeforeUnload = () => handleImmediateSave(false) // No overlay for unload
     
-    // Force save shows the overlay (triggered by navigation buttons)
-    const handleForceSave = () => handleImmediateSave(true)
+    // Force save shows the overlay (triggered by navigation buttons or QuickJumpBar)
+    const handleForceSave = (event: Event) => {
+      const customEvent = event as CustomEvent<{ showOverlay?: boolean }>
+      const showOverlay = customEvent.detail?.showOverlay ?? true
+      handleImmediateSave(showOverlay)
+    }
     
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('beforeunload', handleBeforeUnload)
@@ -311,17 +377,17 @@ export function ScoringSliders({
                     savePromise.finally(() => saveManager.unregisterSave(currentFloatId))
                   }
                 }}
-                max={20}
-                min={0}
+                max={scaleMax}
+                min={scaleMin}
                 step={1}
                 className={`w-full ${value === null ? 'border-2 border-dashed border-gray-400' : ''}`}
               />
               <div className="flex justify-between text-lg text-muted-foreground mt-2">
-                <span className="font-medium">0</span>
+                <span className="font-medium">{scaleMin}</span>
                 <span className={`text-3xl font-bold ${value === null ? 'text-gray-400 italic' : ''}`}>
                   {value === null ? '—' : value}
                 </span>
-                <span className="font-medium">20</span>
+                <span className="font-medium">{scaleMax}</span>
               </div>
             </div>
           )
@@ -341,29 +407,64 @@ export function ScoringSliders({
       {showSavingOverlay && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md">
           <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] p-10 flex flex-col items-center gap-5 border border-gray-200">
-            {/* Animated spinner with dual rings */}
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-gray-200 rounded-full" />
-              <div className="absolute inset-0 w-16 h-16 border-4 border-[#DC2626] border-t-transparent rounded-full animate-spin" />
-              <div className="absolute inset-2 w-12 h-12 border-4 border-[#14532D] border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
-            </div>
-            
-            {/* Animated text */}
-            <div className="text-center">
-              <p className="text-2xl font-bold text-[#14532D] animate-pulse">
-                Saving Score...
-              </p>
-              <p className="text-sm text-gray-500 mt-2">
-                Please wait before navigating
-              </p>
-            </div>
-            
-            {/* Progress dots animation */}
-            <div className="flex gap-1.5">
-              <span className="w-2.5 h-2.5 bg-[#DC2626] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-              <span className="w-2.5 h-2.5 bg-[#DC2626] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-              <span className="w-2.5 h-2.5 bg-[#DC2626] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-            </div>
+            {isLemonadeDay ? (
+              /* Lemonade Day: Creative lemon pitcher animation */
+              <>
+                <div className="relative w-28 h-28">
+                  {/* Central pitcher/glass with lemonade */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-6xl">🍹</span>
+                  </div>
+                  {/* Orbiting lemon - top */}
+                  <div className="absolute inset-0 animate-spin" style={{ animationDuration: '2s' }}>
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-3xl">🍋</span>
+                  </div>
+                  {/* Orbiting lemon - opposite direction */}
+                  <div className="absolute inset-0 animate-spin" style={{ animationDuration: '1.5s', animationDirection: 'reverse' }}>
+                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-2xl">🍋</span>
+                  </div>
+                  {/* Sparkle effects */}
+                  <div className="absolute top-0 right-0 text-xl animate-ping" style={{ animationDuration: '1s' }}>✨</div>
+                  <div className="absolute bottom-2 left-0 text-lg animate-ping" style={{ animationDuration: '1.2s', animationDelay: '0.3s' }}>✨</div>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-yellow-500 animate-pulse">
+                    Squeezing the results...
+                  </p>
+                  <p className="text-sm text-yellow-600/70 mt-2">
+                    Making lemonade magic!
+                  </p>
+                </div>
+                {/* Bouncing lemon slices */}
+                <div className="flex gap-2">
+                  <span className="text-2xl animate-bounce" style={{ animationDelay: '0ms' }}>🍋</span>
+                  <span className="text-2xl animate-bounce" style={{ animationDelay: '150ms' }}>🍋</span>
+                  <span className="text-2xl animate-bounce" style={{ animationDelay: '300ms' }}>🍋</span>
+                </div>
+              </>
+            ) : (
+              /* Regular: Animated spinner with dual rings */
+              <>
+                <div className="relative">
+                  <div className="w-16 h-16 border-4 border-gray-200 rounded-full" />
+                  <div className="absolute inset-0 w-16 h-16 border-4 border-[#DC2626] border-t-transparent rounded-full animate-spin" />
+                  <div className="absolute inset-2 w-12 h-12 border-4 border-[#14532D] border-b-transparent rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '0.8s' }} />
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-[#14532D] animate-pulse">
+                    Saving Score...
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Please wait before navigating
+                  </p>
+                </div>
+                <div className="flex gap-1.5">
+                  <span className="w-2.5 h-2.5 bg-[#DC2626] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2.5 h-2.5 bg-[#DC2626] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2.5 h-2.5 bg-[#DC2626] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

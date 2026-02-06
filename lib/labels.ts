@@ -1,17 +1,18 @@
-import type { EventTypeRules } from "@/lib/event-rules"
-import {
-  getEntryDescriptionLabel,
-  getEntryLabel,
-  getEntryNumberLabel,
-  getEntryPluralLabel,
-  loadEventTypeForEventId,
-} from "@/lib/event-rules"
-
 export type UiLabels = {
   entry: string
   entryPlural: string
   entryNumber: string
   entryDescription: string
+}
+
+// Keep this file CLIENT-SAFE (no DB / server-only imports).
+export type EventTypeRules = {
+  entryTerminology?: {
+    entry?: string
+    entryPlural?: string
+    entryNumber?: string
+    entryDescription?: string
+  }
 }
 
 export function getDefaultLabels(): UiLabels {
@@ -28,13 +29,17 @@ export function labelsFromRules(rules: EventTypeRules | null | undefined): UiLab
   // If rules are missing, keep the current UI wording (Float/Floats).
   if (!rules?.entryTerminology?.entry) return getDefaultLabels()
 
-  const entry = getEntryLabel(rules)
-  const entryPlural = getEntryPluralLabel(rules)
-  const entryNumber = rules.entryTerminology?.entryNumber
-    ? getEntryNumberLabel(rules)
+  const entry = titleCase(rules.entryTerminology.entry)
+  const entryPlural = rules.entryTerminology.entryPlural
+    ? titleCase(rules.entryTerminology.entryPlural)
+    : (entry.endsWith("s") ? entry : `${entry}s`)
+
+  const entryNumber = rules.entryTerminology.entryNumber
+    ? humanizeIfToken(rules.entryTerminology.entryNumber)
     : `${entry} #`
-  const entryDescription = rules.entryTerminology?.entryDescription
-    ? getEntryDescriptionLabel(rules)
+
+  const entryDescription = rules.entryTerminology.entryDescription
+    ? humanizeIfToken(rules.entryTerminology.entryDescription)
     : `${entry} Description`
 
   return {
@@ -45,10 +50,17 @@ export function labelsFromRules(rules: EventTypeRules | null | undefined): UiLab
   }
 }
 
-export async function loadLabelsForEventId(eventId: number | null | undefined): Promise<UiLabels> {
-  if (!eventId) return getDefaultLabels()
+function titleCase(s: string): string {
+  if (!s) return s
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
 
-  const eventType = await loadEventTypeForEventId(eventId)
-  return labelsFromRules(eventType?.rules)
+function humanizeIfToken(s: string): string {
+  // If it looks like a snake_case mapping token, humanize it.
+  if (/_|-/.test(s)) {
+    const cleaned = s.replace(/[_-]+/g, " ").trim()
+    return titleCase(cleaned)
+  }
+  return s
 }
 

@@ -102,15 +102,13 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      // Create event
+      // Create event (use eventDate only - startDate/endDate don't exist in DB)
       const newEvent = await db
         .insert(schema.events)
         .values({
           name,
           city,
-          eventDate: eventDate ? new Date(eventDate) : null,
-          startDate: startDate ? new Date(startDate) : null,
-          endDate: endDate ? new Date(endDate) : null,
+          eventDate: eventDate ? new Date(eventDate) : (startDate ? new Date(startDate) : null),
           active: active ?? true,
         })
         .returning()
@@ -224,9 +222,9 @@ export async function PATCH(request: NextRequest) {
 
     if (name !== undefined) updateData.name = name
     if (city !== undefined) updateData.city = city
+    // Use eventDate only (startDate/endDate don't exist in DB schema)
     if (eventDate !== undefined) updateData.eventDate = eventDate ? new Date(eventDate) : null
-    if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null
-    if (endDate !== undefined) updateData.endDate = endDate ? new Date(endDate) : null
+    else if (startDate !== undefined) updateData.eventDate = startDate ? new Date(startDate) : null
     if (active !== undefined) updateData.active = active
     if (body.entryCategoryTitle !== undefined) updateData.entryCategoryTitle = body.entryCategoryTitle || "Best Entry"
     // Note: scoringCategories are managed via event_categories table, not as JSONB

@@ -31,11 +31,35 @@ export function JudgeSelector() {
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
   const [judges, setJudges] = useState<Judge[]>([])
   const [loading, setLoading] = useState(true)
+  const [judgeModeChecked, setJudgeModeChecked] = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
 
   useEffect(() => {
-    // Get current judge ID from cookie
+    // Judge mode is active if either:
+    // - cookie parade-judge-id exists (via getJudgeIdClient)
+    // - sessionStorage contains thingometer_judge
     const judgeId = getJudgeIdClient()
     setCurrentJudgeId(judgeId)
+
+    let hasSession = false
+    try {
+      hasSession = !!sessionStorage.getItem("thingometer_judge")
+    } catch {
+      // ignore
+    }
+
+    if (judgeId !== null || hasSession) {
+      // In judge mode, skip fetching judges/events and immediately go to floats.
+      setRedirecting(true)
+      window.location.replace("/floats")
+      return
+    }
+
+    setJudgeModeChecked(true)
+  }, [])
+
+  useEffect(() => {
+    if (!judgeModeChecked || redirecting) return
 
     // Fetch active events filtered by city
     const fetchEvents = async () => {
@@ -76,7 +100,7 @@ export function JudgeSelector() {
     }
 
     fetchEvents()
-  }, [])
+  }, [judgeModeChecked, redirecting])
 
   const fetchJudges = async (eventId: number) => {
     try {
@@ -119,6 +143,10 @@ export function JudgeSelector() {
       console.error("Error selecting judge:", error)
       setSelecting(false)
     }
+  }
+
+  if (redirecting) {
+    return null
   }
 
   if (loading) {

@@ -29,8 +29,6 @@ interface Event {
   name: string
   city: string
   eventDate: string | Date | null
-  startDate: string | Date | null
-  endDate: string | Date | null
   active: boolean
   entryCategoryTitle?: string
   categories?: Category[]
@@ -50,12 +48,14 @@ export default function AdminEventsPage() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState<number | null>(null)
   const [showForm, setShowForm] = useState(false)
+  const [showAddJudgeModal, setShowAddJudgeModal] = useState(false)
+  const [newJudgeName, setNewJudgeName] = useState("")
+  const [selectedEventIdForJudge, setSelectedEventIdForJudge] = useState<number | null>(null)
+  const [isFirstEvent, setIsFirstEvent] = useState(false)
   const [formData, setFormData] = useState({
     name: "",
     city: "",
     eventDate: "",
-    startDate: "",
-    endDate: "",
     active: true,
     scoringCategories: [
       { name: "Lighting", required: true, hasNone: true },
@@ -72,17 +72,26 @@ export default function AdminEventsPage() {
     fetchEvents()
   }, [])
 
+  useEffect(() => {
+    if (events.length === 0 && !loading) {
+      setIsFirstEvent(true)
+      setShowForm(true) // Auto-open create form for first event
+    } else {
+      setIsFirstEvent(false)
+    }
+  }, [events, loading])
+
   const fetchEvents = async () => {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
       const response = await fetch(`/api/admin/events?password=${encodeURIComponent(password)}`)
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -109,7 +118,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -120,8 +129,6 @@ export default function AdminEventsPage() {
           name: formData.name,
           city: formData.city,
           eventDate: formData.eventDate || null,
-          startDate: formData.startDate || null,
-          endDate: formData.endDate || null,
           active: formData.active,
           scoringCategories: formData.scoringCategories,
           judges: formData.judges,
@@ -129,7 +136,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -149,8 +156,6 @@ export default function AdminEventsPage() {
         name: "",
         city: "",
         eventDate: "",
-        startDate: "",
-        endDate: "",
         active: true,
         scoringCategories: [
           { name: "Lighting", required: true, hasNone: true },
@@ -172,7 +177,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -183,7 +188,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -211,7 +216,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -222,7 +227,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -244,7 +249,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -255,7 +260,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -282,7 +287,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -298,7 +303,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -325,7 +330,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -336,7 +341,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -358,7 +363,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -369,7 +374,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -390,7 +395,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -401,7 +406,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -422,7 +427,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -433,7 +438,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -460,7 +465,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -471,7 +476,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -497,7 +502,7 @@ export default function AdminEventsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -506,7 +511,7 @@ export default function AdminEventsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -578,11 +583,18 @@ export default function AdminEventsPage() {
   return (
     <div className="min-h-screen container mx-auto px-2 sm:px-4 py-4 sm:py-6 max-w-full overflow-x-hidden">
       <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-        <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "#14532D" }}>
-          Manage Events
-        </h1>
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold" style={{ color: "#14532D" }}>
+            {isFirstEvent ? "Create Your First Event" : "Manage Events"}
+          </h1>
+          {isFirstEvent && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Events are the foundation of Thingometer. Create your first event to start managing entries and judging.
+            </p>
+          )}
+        </div>
         <div className="flex gap-2">
-          <Link href="/admin/results">
+          <Link href="/admin/dashboard">
             <Button variant="outline" className="text-xs sm:text-sm">Back to Dashboard</Button>
           </Link>
         </div>
@@ -590,7 +602,7 @@ export default function AdminEventsPage() {
 
       <Card className="p-4 sm:p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-          <h2 className="text-lg sm:text-xl font-semibold">Parade Events</h2>
+          <h2 className="text-lg sm:text-xl font-semibold">Events</h2>
           <Button
             onClick={() => setShowForm(!showForm)}
             className="bg-[#16A34A] hover:bg-[#16A34A]/90 text-white text-xs sm:text-sm"
@@ -620,19 +632,11 @@ export default function AdminEventsPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Start Date (Optional)</label>
+                <label className="block text-sm font-medium mb-1">Event Date (Optional)</label>
                 <Input
                   type="datetime-local"
-                  value={formData.startDate}
-                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">End Date (Optional)</label>
-                <Input
-                  type="datetime-local"
-                  value={formData.endDate}
-                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  value={formData.eventDate}
+                  onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })}
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -676,7 +680,7 @@ export default function AdminEventsPage() {
                     <Input
                       placeholder="Category name (e.g., Lighting)"
                       value={category.name}
-                      onChange={(e) => updateCategory(index, "categoryName", e.target.value)}
+                      onChange={(e) => updateCategory(index, "name", e.target.value)}
                       className="flex-1"
                     />
                     <label className="flex items-center gap-1 text-xs whitespace-nowrap group relative" title="Required categories must have a score (1-20) or None (0) before a judge can submit">
@@ -768,8 +772,7 @@ export default function AdminEventsPage() {
               <TableRow>
                 <TableHead className="min-w-[150px]">Name</TableHead>
                 <TableHead className="min-w-[100px]">City</TableHead>
-                <TableHead className="min-w-[120px]">Start Date</TableHead>
-                <TableHead className="min-w-[120px]">End Date</TableHead>
+                <TableHead className="min-w-[120px]">Event Date</TableHead>
                 <TableHead className="min-w-[80px]">Status</TableHead>
                 <TableHead className="min-w-[100px]">Actions</TableHead>
               </TableRow>
@@ -807,34 +810,17 @@ export default function AdminEventsPage() {
                               />
                             </div>
                             <div>
-                              <label className="block text-sm font-medium mb-1">Start Date (Optional)</label>
+                              <label className="block text-sm font-medium mb-1">Event Date (Optional)</label>
                               <Input
                                 type="datetime-local"
-                                defaultValue={event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : ""}
+                                defaultValue={event.eventDate ? new Date(event.eventDate).toISOString().slice(0, 16) : ""}
                                 onBlur={(e) => {
                                   const newDateStr = e.target.value
-                                  const oldDateStr = event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : ""
+                                  const oldDateStr = event.eventDate ? new Date(event.eventDate).toISOString().slice(0, 16) : ""
                                   if (newDateStr !== oldDateStr) {
                                     // API expects Date object or null
                                     const newDate = newDateStr ? new Date(newDateStr) : null
-                                    handleUpdate(event.id, { startDate: newDate as any as string | null })
-                                  }
-                                }}
-                                className="text-xs sm:text-sm"
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium mb-1">End Date (Optional)</label>
-                              <Input
-                                type="datetime-local"
-                                defaultValue={event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : ""}
-                                onBlur={(e) => {
-                                  const newDateStr = e.target.value
-                                  const oldDateStr = event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : ""
-                                  if (newDateStr !== oldDateStr) {
-                                    // API expects Date object or null
-                                    const newDate = newDateStr ? new Date(newDateStr) : null
-                                    handleUpdate(event.id, { endDate: newDate as any as string | null })
+                                    handleUpdate(event.id, { eventDate: newDate as any as string | null })
                                   }
                                 }}
                                 className="text-xs sm:text-sm"
@@ -974,11 +960,10 @@ export default function AdminEventsPage() {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                onClick={async () => {
-                                  const judgeName = prompt("Enter judge name:")
-                                  if (judgeName && judgeName.trim()) {
-                                    await handleAddJudge(event.id, judgeName.trim())
-                                  }
+                                onClick={() => {
+                                  setSelectedEventIdForJudge(event.id)
+                                  setNewJudgeName("")
+                                  setShowAddJudgeModal(true)
                                 }}
                                 className="text-xs"
                               >
@@ -1061,13 +1046,8 @@ export default function AdminEventsPage() {
                       </TableCell>
                       <TableCell className="text-xs sm:text-sm min-w-[100px]">{event.city}</TableCell>
                       <TableCell className="text-xs sm:text-sm min-w-[120px]">
-                        {event.startDate
-                          ? new Date(event.startDate).toLocaleDateString()
-                          : "—"}
-                      </TableCell>
-                      <TableCell className="text-xs sm:text-sm">
-                        {event.endDate
-                          ? new Date(event.endDate).toLocaleDateString()
+                        {event.eventDate
+                          ? new Date(event.eventDate).toLocaleDateString()
                           : "—"}
                       </TableCell>
                       <TableCell className="min-w-[80px]">
@@ -1118,6 +1098,58 @@ export default function AdminEventsPage() {
           </Table>
         </div>
       </Card>
+
+      {/* Add Judge Modal */}
+      {showAddJudgeModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-4">Add New Judge</h3>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="judgeName" className="block text-sm font-medium mb-2">
+                  Judge Name <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  id="judgeName"
+                  value={newJudgeName}
+                  onChange={(e) => setNewJudgeName(e.target.value)}
+                  placeholder="Enter judge name (e.g., Judge 1)"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newJudgeName.trim()) {
+                      handleAddJudge(selectedEventIdForJudge!, newJudgeName.trim())
+                      setShowAddJudgeModal(false)
+                    } else if (e.key === "Escape") {
+                      setShowAddJudgeModal(false)
+                    }
+                  }}
+                  autoFocus
+                />
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAddJudgeModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={async () => {
+                    if (newJudgeName.trim() && selectedEventIdForJudge) {
+                      await handleAddJudge(selectedEventIdForJudge, newJudgeName.trim())
+                      setShowAddJudgeModal(false)
+                    }
+                  }}
+                  disabled={!newJudgeName.trim()}
+                >
+                  Add Judge
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

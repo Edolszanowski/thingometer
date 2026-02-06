@@ -64,3 +64,110 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ============================================================================
+   THEME SYSTEM - Dynamic theme variables
+   ============================================================================ */
+:root {
+  /* Theme color variables (overridden by ThemeProvider) */
+  --theme-primary: #DC2626;
+  --theme-secondary: #16A34A;
+  --theme-accent: #F59E0B;
+  --theme-background: #FFFFFF;
+  --theme-foreground: #14532D;
+}
+
+/* ============================================================================
+   HIGH CONTRAST MODES - For outdoor visibility
+   ============================================================================ */
+
+/* High contrast mode for outdoor visibility */
+.contrast-high {
+  --text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --button-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.contrast-high * {
+  text-shadow: var(--text-shadow);
+}
+
+.contrast-high button,
+.contrast-high .button,
+.contrast-high [role="button"] {
+  box-shadow: var(--button-shadow);
+  font-weight: 600;
+}
+
+.contrast-high h1,
+.contrast-high h2,
+.contrast-high h3,
+.contrast-high h4 {
+  font-weight: 700;
+}
+
+/* Maximum contrast for bright sunlight */
+.contrast-maximum {
+  --text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --button-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+  filter: contrast(1.2);
+}
+
+.contrast-maximum * {
+  text-shadow: var(--text-shadow);
+  font-weight: 600;
+}
+
+.contrast-maximum button,
+.contrast-maximum .button,
+.contrast-maximum [role="button"] {
+  box-shadow: var(--button-shadow);
+  border-width: 2px;
+}
+
+.contrast-maximum h1,
+.contrast-maximum h2,
+.contrast-maximum h3,
+.contrast-maximum h4 {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================================
+   THEME PRESETS - Named theme classes
+   ============================================================================ */
+
+/* Lemonade Day theme - outdoor optimized */
+.theme-lemonade {
+  --theme-primary: #FCD34D;
+  --theme-secondary: #F59E0B;
+  --theme-accent: #FBBF24;
+  --theme-background: #FFFBEB;
+  --theme-foreground: #78350F;
+}
+
+/* Chili Cookoff theme */
+.theme-chili {
+  --theme-primary: #DC2626;
+  --theme-secondary: #C2410C;
+  --theme-accent: #EA580C;
+  --theme-background: #FFF7ED;
+  --theme-foreground: #7C2D12;
+}
+
+/* German Festival theme */
+.theme-german {
+  --theme-primary: #1E40AF;
+  --theme-secondary: #3B82F6;
+  --theme-accent: #FBBF24;
+  --theme-background: #EFF6FF;
+  --theme-foreground: #1E3A8A;
+}
+
+/* Christmas Parade theme (default) */
+.theme-christmas {
+  --theme-primary: #DC2626;
+  --theme-secondary: #16A34A;
+  --theme-accent: #F59E0B;
+  --theme-background: #FFFFFF;
+  --theme-foreground: #14532D;
+}
+

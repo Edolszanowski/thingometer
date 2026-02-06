@@ -99,6 +99,7 @@ function getRawSql(): RawSqlClient {
       max: 5,
       idle_timeout: 20,
       connect_timeout: 10,
+      prepare: false, // Required for Supabase transaction pooler (port 6543)
     })
     _rawSql = client as RawSqlClient
     return _rawSql

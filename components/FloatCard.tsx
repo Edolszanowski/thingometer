@@ -16,9 +16,10 @@ interface FloatCardProps {
   scored: boolean
   scoreStatus?: ScoreStatus
   labels?: UiLabels
+  displayNumber?: number // Sequential display number (1, 2, 3...) to match QuickJumpBar
 }
 
-export function FloatCard({ float, score, scored, scoreStatus = 'not_started', labels }: FloatCardProps) {
+export function FloatCard({ float, score, scored, scoreStatus = 'not_started', labels, displayNumber }: FloatCardProps) {
   const router = useRouter()
 
   const handleClick = async () => {
@@ -87,7 +88,7 @@ export function FloatCard({ float, score, scored, scoreStatus = 'not_started', l
       <CardContent className="p-4">
         <div className="flex flex-col space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-lg">{labels?.entryNumber ?? "Float #"}{float.floatNumber}</h3>
+            <h3 className="font-bold text-lg">{labels?.entryNumber ?? "Float #"}{displayNumber ?? float.floatNumber}</h3>
             {statusText && (
               <span className={`text-sm font-semibold ${statusColor}`}>
                 {statusText}

@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, boolean, timestamp, unique, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, serial, text, integer, boolean, timestamp, unique, jsonb, uuid } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 
 // ============================================================================
@@ -23,11 +23,14 @@ export const events = pgTable("events", {
   name: text("name").notNull(), // e.g., "2025 Comfort Xmas Parade"
   city: text("city").notNull(), // e.g., "Comfort" (legacy, kept for backward compatibility)
   cityId: integer("city_id").references(() => cities.id, { onDelete: "set null" }), // Multi-tenant city reference
+  organization: text("organization"), // Host organization (e.g., "Greater Boerne Chamber of Commerce")
   eventDate: timestamp("event_date"), // Optional date of the parade (legacy, kept for backward compatibility)
-  startDate: timestamp("start_date"), // Start date of the event
-  endDate: timestamp("end_date"), // End date of the event
+  // Note: startDate and endDate columns don't exist in actual database - removed from schema
+  // startDate: timestamp("start_date"), // Start date of the event
+  // endDate: timestamp("end_date"), // End date of the event
   active: boolean("active").notNull().default(true), // Whether this event is currently active
   positionMode: text("position_mode").default("preplanned").$type<"preplanned" | "jit">(), // JIT release mode
+  type: text("type").$type<"parade" | "lemonade_day" | "other">(), // Event type for compliance detection
   entryCategoryTitle: text("entry_category_title").default("Best Entry"), // Customizable title for the overall/entry category
   entryAttributes: jsonb("entry_attributes").$type<{
     extraFields?: Array<{
@@ -83,6 +86,7 @@ export const judges = pgTable(
   "judges",
   {
     id: serial("id").primaryKey(),
+    accessToken: uuid("access_token").notNull().defaultRandom(),
     eventId: integer("event_id")
       .references(() => events.id, { onDelete: "cascade" }), // Nullable for migration
     name: text("name").notNull(), // Judge name (can repeat across events)
@@ -112,6 +116,91 @@ export const participants = pgTable("participants", {
 })
 
 // ============================================================================
+// LEMONADE DAY METADATA - TypeScript type for Lemonade Day compliance data
+// ============================================================================
+export type LemonadeDayMetadata = {
+  // Child Participant Info
+  childFirstName: string
+  childLastName: string
+  childAge?: number
+  ageGroup: "6-8" | "9-11" | "12-14" | "15-18"
+  
+  // Parent/Guardian Info
+  guardianName: string
+  guardianEmail: string
+  guardianPhone?: string  // Optional
+  
+  // Stand Location (use standAddress consistently)
+  standAddress: string  // Required: address or description
+  standName?: string    // Optional: display name for stand
+  locationLat?: number  // Optional GPS
+  locationLng?: number  // Optional GPS
+  cityAffiliation: string // "Boerne"
+  
+  // Legal Acknowledgments (with timestamps)
+  guardianConsent: {
+    accepted: boolean
+    timestamp: string
+    ipAddress?: string  // Optional, captured server-side from request headers
+  }
+  foodSafetyAcknowledgment: {
+    accepted: boolean
+    timestamp: string
+  }
+  liabilityWaiver: {
+    accepted: boolean
+    timestamp: string
+  }
+  judgingConsent: {
+    scoringConsent: boolean
+    awardsConsent: boolean
+    timestamp: string
+  }
+  mediaConsent?: {
+    accepted: boolean
+    timestamp: string
+  }
+  dataUseConsent?: {
+    accepted: boolean
+    timestamp: string
+  }
+  publicListingConsent?: {  // CRO: Chambers love this
+    accepted: boolean
+    timestamp: string
+  }
+  
+  // Compliance tracking
+  complianceCompleted: boolean
+  complianceCompletedAt: string
+}
+
+// ============================================================================
+// FLOATS METADATA - TypeScript type for floats metadata structure
+// ============================================================================
+export type FloatsMetadata = {
+  lemonadeDay?: LemonadeDayMetadata
+  status?: "pending-consent" | "registered" | "checked-in" | "judged" | "completed"
+  statusHistory?: Array<{
+    status: string
+    timestamp: string
+    updatedBy?: string
+  }>
+  // LEMONADE DAY: Assigned stand location (coordinator-only assignment)
+  // CRITICAL SAFETY: placeId is PRIMARY source of truth, lat/lng are CACHE ONLY
+  assignedLocation?: {
+    placeId: string  // PRIMARY: Google Place ID (source of truth)
+    address: string  // Formatted address from Google Maps
+    lat?: number     // CACHE ONLY: Derived from placeId, not authoritative
+    lng?: number     // CACHE ONLY: Derived from placeId, not authoritative
+    placeName?: string  // e.g., "Downtown Park", "Main Street Corner"
+    instructions?: string  // Coordinator notes: "Near the fountain", "Blue tent area"
+    assignedBy: string  // Coordinator name/ID
+    assignedAt: string  // ISO timestamp
+  }
+  [key: string]: unknown
+}
+
+// ============================================================================
 // FLOATS - Float entries
 // ============================================================================
 export const floats = pgTable("floats", {
@@ -133,7 +222,7 @@ export const floats = pgTable("floats", {
   hasMusic: boolean("has_music").notNull().default(false),
   approved: boolean("approved").notNull().default(false),
   submittedAt: timestamp("submitted_at"),
-  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
+  metadata: jsonb("metadata").$type<FloatsMetadata>().default({}),
 })
 
 // ============================================================================
@@ -223,12 +312,29 @@ export const settings = pgTable("settings", {
 // ============================================================================
 // RELATIONS - Drizzle ORM relations
 // ============================================================================
-export const eventsRelations = relations(events, ({ many }) => ({
+export const citiesRelations = relations(cities, ({ many, one }) => ({
+  events: many(events),
+  cityUsers: many(cityUsers),
+  branding: one(cityBranding, {
+    fields: [cities.id],
+    references: [cityBranding.cityId],
+  }),
+}))
+
+export const eventsRelations = relations(events, ({ many, one }) => ({
   floats: many(floats),
   categories: many(eventCategories),
   judges: many(judges),
   scores: many(scores),
   judgeSubmissions: many(judgeSubmissions),
+  city: one(cities, {
+    fields: [events.cityId],
+    references: [cities.id],
+  }),
+  branding: one(eventBranding, {
+    fields: [events.id],
+    references: [eventBranding.eventId],
+  }),
 }))
 
 export const eventCategoriesRelations = relations(eventCategories, ({ one, many }) => ({
@@ -444,3 +550,133 @@ export type NewEventDocument = typeof eventDocuments.$inferInsert
 
 export type Vendor = typeof vendors.$inferSelect
 export type NewVendor = typeof vendors.$inferInsert
+
+// ============================================================================
+// CITY_BRANDING - City-level branding configuration
+// ============================================================================
+// Brand Hierarchy: Organization/city identity establishes trust, event identity 
+// provides context, sponsor recognition in designated non-disruptive areas.
+export const cityBranding = pgTable("city_branding", {
+  id: serial("id").primaryKey(),
+  cityId: integer("city_id").notNull().references(() => cities.id, { onDelete: "cascade" }),
+  logoUrl: text("logo_url"),
+  logoDarkUrl: text("logo_dark_url"),
+  faviconUrl: text("favicon_url"),
+  primaryColor: text("primary_color"),
+  secondaryColor: text("secondary_color"),
+  accentColor: text("accent_color"),
+  customCss: text("custom_css"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+})
+
+// ============================================================================
+// EVENT_BRANDING - Per-event branding configuration
+// ============================================================================
+export const eventBranding = pgTable("event_branding", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
+  themePreset: text("theme_preset"), // 'christmas', 'lemonade', 'chili', 'german', 'custom'
+  textContrastMode: text("text_contrast_mode").default("auto"), // 'auto', 'high', 'maximum'
+  logoUrl: text("logo_url"),
+  logoDarkUrl: text("logo_dark_url"),
+  faviconUrl: text("favicon_url"),
+  primaryColor: text("primary_color"),
+  secondaryColor: text("secondary_color"),
+  accentColor: text("accent_color"),
+  backgroundImageUrl: text("background_image_url"),
+  fontFamily: text("font_family"),
+  customCss: text("custom_css"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+})
+
+// ============================================================================
+// THEME_PRESETS - Professionally designed, accessibility-tested themes
+// ============================================================================
+// Theme presets function as professionally designed, accessibility-tested 
+// experience foundations that reduce setup time while ensuring visual 
+// consistency and outdoor readability.
+export const themePresets = pgTable("theme_presets", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  slug: text("slug").notNull().unique(),
+  description: text("description"),
+  colors: jsonb("colors").$type<{
+    primary: string
+    secondary: string
+    accent: string
+    background: string
+    foreground: string
+  }>().notNull(),
+  cssVariables: jsonb("css_variables").$type<Record<string, string>>(),
+  accessibilityMode: text("accessibility_mode").default("standard"), // 'standard', 'high-contrast', 'outdoor'
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+})
+
+// ============================================================================
+// HELP_CONTENT - Context-aware help content
+// ============================================================================
+// Help and onboarding features provide just-in-time confidence rather than 
+// formal training, enabling judges, volunteers, and coordinators to perform 
+// effectively with minimal instruction.
+export const helpContent = pgTable("help_content", {
+  id: serial("id").primaryKey(),
+  role: text("role").notNull(), // 'judge', 'admin', 'coordinator', 'public'
+  pageContext: text("page_context").notNull(), // 'login', 'scoring', 'results', 'approval', etc.
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  videoUrl: text("video_url"),
+  displayOrder: integer("display_order").default(0),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+})
+
+// ============================================================================
+// USER_ONBOARDING - Track user onboarding progress
+// ============================================================================
+export const userOnboarding = pgTable("user_onboarding", {
+  id: serial("id").primaryKey(),
+  userIdentifier: text("user_identifier").notNull(), // Email or judge ID
+  role: text("role").notNull(),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  completedSteps: jsonb("completed_steps").$type<string[]>().default([]),
+  lastSeenAt: timestamp("last_seen_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+})
+
+// ============================================================================
+// BRANDING RELATIONS
+// ============================================================================
+export const cityBrandingRelations = relations(cityBranding, ({ one }) => ({
+  city: one(cities, {
+    fields: [cityBranding.cityId],
+    references: [cities.id],
+  }),
+}))
+
+export const eventBrandingRelations = relations(eventBranding, ({ one }) => ({
+  event: one(events, {
+    fields: [eventBranding.eventId],
+    references: [events.id],
+  }),
+}))
+
+// ============================================================================
+// BRANDING TYPE EXPORTS
+// ============================================================================
+export type CityBranding = typeof cityBranding.$inferSelect
+export type NewCityBranding = typeof cityBranding.$inferInsert
+
+export type EventBranding = typeof eventBranding.$inferSelect
+export type NewEventBranding = typeof eventBranding.$inferInsert
+
+export type ThemePreset = typeof themePresets.$inferSelect
+export type NewThemePreset = typeof themePresets.$inferInsert
+
+export type HelpContent = typeof helpContent.$inferSelect
+export type NewHelpContent = typeof helpContent.$inferInsert
+
+export type UserOnboarding = typeof userOnboarding.$inferSelect
+export type NewUserOnboarding = typeof userOnboarding.$inferInsert

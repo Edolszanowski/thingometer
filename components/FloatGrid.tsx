@@ -173,7 +173,7 @@ export function FloatGrid({ initialFloats, onProgressUpdate, labels }: FloatGrid
       )}
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {floats.map((float) => (
+        {floats.map((float, index) => (
           <FloatCard
             key={float.id}
             float={float}
@@ -181,6 +181,7 @@ export function FloatGrid({ initialFloats, onProgressUpdate, labels }: FloatGrid
             scored={float.scored}
             scoreStatus={float.scoreStatus}
             labels={labels}
+            displayNumber={index + 1} // Sequential display number (1, 2, 3...) to match QuickJumpBar
           />
         ))}
       </div>

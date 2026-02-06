@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { toast } from "sonner"
-import { ArrowUp, ArrowDown, Save, RefreshCw, Trash2, Plus } from "lucide-react"
+import { ArrowUp, ArrowDown, Save, RefreshCw, Trash2, Plus, MapPin } from "lucide-react"
 import { EventSelector, getCoordinatorEventId } from "@/components/EventSelector"
 import { ParticipantLookup } from "@/components/ParticipantLookup"
 import { useRealtimeCallback } from "@/hooks/useRealtimeData"
@@ -39,6 +39,7 @@ export default function CoordinatorPositionsPage() {
   const [deleting, setDeleting] = useState<number | null>(null)
   const [selectedEventId, setSelectedEventId] = useState<number | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [isLemonadeDay, setIsLemonadeDay] = useState(false)
 
   useEffect(() => {
     const eventId = getCoordinatorEventId()
@@ -57,9 +58,25 @@ export default function CoordinatorPositionsPage() {
     !loading && !saving && !deleting // Don't refresh while we're making changes
   )
 
-  const handleEventChange = (eventId: number | null) => {
+  const handleEventChange = async (eventId: number | null) => {
     setSelectedEventId(eventId)
     fetchFloats(eventId)
+    
+    // Check if event is Lemonade Day
+    if (eventId) {
+      try {
+        const eventsResponse = await fetch("/api/events")
+        if (eventsResponse.ok) {
+          const events = await eventsResponse.json()
+          const event = events.find((e: any) => e.id === eventId)
+          setIsLemonadeDay(event?.type === "lemonade_day")
+        }
+      } catch (error) {
+        console.error("Error checking event type:", error)
+      }
+    } else {
+      setIsLemonadeDay(false)
+    }
   }
 
   const fetchSignupLockStatus = async () => {
@@ -79,7 +96,7 @@ export default function CoordinatorPositionsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -93,7 +110,7 @@ export default function CoordinatorPositionsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -120,7 +137,7 @@ export default function CoordinatorPositionsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -132,7 +149,7 @@ export default function CoordinatorPositionsPage() {
       const response = await fetch(url)
       
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -177,7 +194,7 @@ export default function CoordinatorPositionsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -193,7 +210,7 @@ export default function CoordinatorPositionsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -230,7 +247,7 @@ export default function CoordinatorPositionsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -339,7 +356,7 @@ export default function CoordinatorPositionsPage() {
     try {
       const password = getAdminPassword()
       if (!password) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -352,7 +369,7 @@ export default function CoordinatorPositionsPage() {
       })
 
       if (response.status === 401) {
-        router.push("/admin")
+        router.push("/admin/dashboard")
         return
       }
 
@@ -428,6 +445,14 @@ export default function CoordinatorPositionsPage() {
                 Approve
               </Button>
             </Link>
+            {isLemonadeDay && (
+              <Link href="/coordinator/locations">
+                <Button variant="outline" size="sm" className="whitespace-nowrap text-xs sm:text-sm bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100">
+                  <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  Stand Locations
+                </Button>
+              </Link>
+            )}
             <Button
               onClick={() => fetchFloats(selectedEventId, true)}
               variant="outline"
