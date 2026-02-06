@@ -189,7 +189,6 @@ export default function CoordinatorLocationsPage() {
 
           {/* Event Selector */}
           <EventSelector
-            selectedEventId={selectedEventId}
             onEventChange={handleEventChange}
           />
         </div>
