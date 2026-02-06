@@ -5,7 +5,15 @@ const JUDGE_ID_COOKIE = "parade-judge-id"
 export async function getJudgeId(): Promise<number | null> {
   try {
     const cookieStore = await cookies()
-    const judgeIdCookie = cookieStore.get(JUDGE_ID_COOKIE)
+    
+    // Try the main cookie first (httpOnly, server-side only)
+    let judgeIdCookie = cookieStore.get(JUDGE_ID_COOKIE)
+    
+    // Fallback to client cookie if main cookie not found (for compatibility with client-side auth)
+    if (!judgeIdCookie) {
+      judgeIdCookie = cookieStore.get(`${JUDGE_ID_COOKIE}-client`)
+    }
+    
     if (judgeIdCookie?.value) {
       const judgeId = parseInt(judgeIdCookie.value, 10)
       return isNaN(judgeId) ? null : judgeId
